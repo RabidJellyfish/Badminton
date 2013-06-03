@@ -10,6 +10,15 @@
       <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\box.xnb</Output>
       <Time>2013-06-02T19:51:36.9288391-04:00</Time>
     </Item>
+    <Item>
+      <Source>basicFont.spritefont</Source>
+      <Name>basicFont</Name>
+      <Importer>FontDescriptionImporter</Importer>
+      <Processor>FontDescriptionProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\basicFont.xnb</Output>
+      <Time>2013-06-03T15:11:48.7017852-04:00</Time>
+    </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
       <TargetPlatform>Windows</TargetPlatform>
