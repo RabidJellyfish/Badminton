@@ -1,0 +1,207 @@
+Game Title: Badminton
+Why? Because it was the first word that came up when I went to a random word generator.
+
+Assets: Farseer Physics Engine
+	Microsoft Visual Studio (C#)
+	Microsoft XNA Game Studio
+
+Ideas:
+-No animations
+	-The game should be physics-based, meaning that all interactions between objects are not scripted and are resolved in a physics engine.
+	-Some forced movement will be necessary for situations such as getting up off of the ground, and "stances" as explained below.
+-Shooter game
+-Destructible objects/props
+	-All objects are controlled by the physics engine. This includes props as well as bullets.
+-Destructible players
+	-With enough power, limbs can be broken off. While still in a physics-based environment, this would make for some interesting, unique situations.
+-No health
+	-Damage will be done directly to limbs. A limb at full health will move at 100% its usual speed. As it takes damage, this number will lower.  
+	
+
+
+
+
+
+
+Graphics:
+-Stick figure characters?
+	-When i first had this idea, I imagined the characters as small-ish stick figures. I feel that if they are thick or large that they'll just look really clunky and stupid.
+-Pixel art weapons
+	-This not only seems fun, but practical.
+-Lightly textured backgrounds
+	-If the background does not contrast well with the characters and/or objects in the scene, it will look cluttered, like CS:GO.
+	-This would mean very simple textures that don't change color much, like blue skies.
+-Object textures
+	-If there's a box, it should look like a box.
+	-However, I want to stick to a texture scheme that does not make it difficult to tell where and what things are, such as your character, weapons, or ammo.
+-Stationary scene
+	-The game will take place in an area that remains stationary on the scene. Only your characters and other objects in the scene move.
+	-You can see the entire scene and there is no need for scrolling.
+
+
+
+
+
+
+Player-controlled Movement/Character Physics:
+-"Forcing" limbs
+	-When a "stance" is needed, there will be keys to force limbs to a certain location. This movement will depend on their health.
+	-For instance. If there is a key that causes a player to go into a T stance, then when that key is pressed, forces will act on each limb that will push them to that stance.
+	-If the limbs are at 100% health, this will result in the character moving to that stance quickly, and remaining stiff in that stance.
+	-The stiffness is important.
+	-As limbs are injured, they will move more slowly going to stances, and may not be able to make it to the position completely.
+	-They will also not be stiff, which means that weapons and other objects, as well as gravity, will weigh down limbs.
+-Running left/right
+	-Probably impossible with "stances."
+	-However, standing could be a default stance, and moving the keys could simply move a leg to the other side of the body.
+	-The leg movement will switch when they are are a certain distance apart.
+	-To avoid falling over with every step, forces could be applied on the torso to keep the character upright.
+	-When the movement keys are no longer pressed, the character could go back to the default standing stance.
+-Jumping
+	-I don't yet know how to imagine this with the physics idea. I feel like if we make the legs bend down and then go completely straight while keeping the torso upright for the duration of the jump it might work.
+-Crouching
+	-There will be a crouch button.
+	-Crouching would reduce the kick back from using heavy weapons
+	-It would also make moving weapons to aim them easier, whether they are heavy and bulky or your arms are injured.
+-Prone
+	-This would make moving weapons to aim them easier, whether they are heavy and bulky or your arms are injured.
+	-Making a character go prone would be done by holding the crouch key and then moving in the direction you want to face when prone.
+	-There would be no way to move when prone, so I could see a bunch of people running and diving on the ground repeatedly to dodge bullets and stuff, which seems pretty awesome.
+-Climbing
+	-Maybe there could be an option to not exactly "climb" up a edge, but at least launch yourself upwards with your arms when you jump up to an edge.
+	-This would only really work with no weapons or one handed weapons.
+	-I think this is impossible.
+-Moving with weapons
+	-When moving with weapons, they will be attached to your hand(s).
+	-They will move with your hands and swing around, and you will not have control over your hands/arms until you press the aim button.
+	-When you press the aim key, your arms will be forced toward an aiming stance, And will try to orient the gun to aim at your mouse cursor.
+	-This will be entirely accurate when your arms are at 100% health, but will get less accurate when they are injured, simply by the weapons weighing down the arms.
+	-All weapons will be aimable with a "stiff" stance when limbs are at 100%
+	-Each weapon has its own aiming stance as well as hand locations that they are locked to.
+-Specific limbs and their health effects
+	-Head
+		-Has a force threshold. If enough force hits the head, all limbs will lose 100% of their health.
+		-Causes a loss of control of the character when hit.
+		-I don't think that knocking a character to the ground for every headshot should happen, because it seems annoying. Rather, for low-force interactions, it should cause a "stagger" rather than a fall.
+		-But I still think that the player should lose their ability to aim until their character has recuperated. 
+		-Causes all limbs to take damage when hit.
+	-Torso
+		-Responsible for standing, running, jumping stances.
+	-Upper arm
+		-Responsible for half of the movement of the lower arm. Meaning that the upper arm taking damage will make it harder to aim, but if the lower arm is healthy, you can still aim.
+	-Lower arm
+		-Responsible for aiming. If the upper arm is completely dead, and the lower arm is completely okay, it will be able to aim at half the rate that it could.
+		-However, if the lower arm is totally dead, you cannot aim. Your upper arm will still move but your weapon will hand and swing around from your lifeless, dead lower arm.
+	-A note about arms
+		-There are two of them. If one dies, that means that you really can't aim with two handed weapons.
+		-But you can still aim with one handed weapons. There should be a key to switch hands for one handed weapons because of this.
+	-Upper leg
+		-Responsible for standing, crouching, moving, and jumping.
+		-Independent of the lower leg. This means that if the lower leg dies, you can still walk.. on your knees.
+	-Lower leg
+		-Responsible for standing, crouching, moving, and jumping.
+
+
+
+
+Controls:
+-Move Right: 	D
+-Move Left: 	A
+-Jump:		Space
+-Crouch:	Control
+-Climb:		W
+-Switch hands:	E
+-Pick up weapon:S
+-Throw Weapon:	Q
+-Shoot Gun:	Left Click
+-Aim Gun:	Right Click
+
+
+
+
+
+
+-Bullet/projectile physics:
+	-Bullets are physical objects. Therefore they have weight
+	-Bullets would be "launched" from weapons.
+	-They do not have to be inside the weapon originally, and could be spawned as soon as the weapon is fired. When this occurs, the weapon becomes lighter.
+	-A force is applied on the bullet as soon as it is launched. This force depends on the gun that it is shot from.
+	-The same force will also be applied in the direction of the character as a knockback.
+	-I had an idea of a weapon with heavy ammunition, where it was very sluggish to move with at first but eventually became very light and maneuverable. Since the weapon becomes lighter, the knockback as you keep shooting the weapon would increase dramatically.
+	-Gravity exists, so bullets will fall.
+	-Bullets will either "bounce" off of enemies, exerting a force on the limb, or continue through them while they break off a limb.
+
+
+
+
+
+
+Gameplay: ===THIS IS IDEALIST===
+-Multiplayer
+	-2+ players. I don't know how many in total. Probably a limit of 4 or 5 to avoid clusterfuck. 
+-Game types
+	-Deathmatch
+	-Team deathmach
+	-Kill the important overpowered guy selected at random
+	-Last man standing
+	-All game types can be weapon specific i.e. Deathmatch with baseball bats.
+	-For deathmatch types and OP guy, you can respawn.
+-Everyone will start with a handgun. It will be a very shitty handgun, where throwing it at someones head will do more damage then shooting a few bullets at them.
+-Weapons will be around the map. Each map will have its own weapon spawns.
+-There will be multiple maps.
+-The player's "death" will be determined by their inability to move. This would be caused by damage to their limbs, or pinning them with objects.
+
+
+
+
+
+
+Weapon ideas:
+-Melee
+	-Knife
+	-Baseball bat
+	-Sword
+	-Crowbarb
+	-Arrow (For bow/crossbow)
+	-Broken objects
+	-Glass bottles
+-Light
+	-Handgun
+	-SMG
+	-Revolver
+	-Bow
+	-Laser gun
+-Medium
+	-Assault Rifle
+	-Shotgun
+	-Battle rifle (unscoped single shot rifle)
+	-Lightning gun
+-Heavy
+	-Machine gun
+	-Rocket launcher
+	-Sniper rifle
+	-Grenade launcher
+	-Gravity gun
+-Explosives
+	-Grenades
+	-Rockets
+	-Mines
+	-C4
+
+===ALL ITEMS ARE THROWABLE===
+
+Weapons can be picked up. There will be a button to do so. Your hand does not need to be touching the weapon to pick it up. As long as you are standing over it you will pick it up.
+If you find explosive ammunition without having the weapon for it, you can still pick it up, and throwing it will make it explode.
+
+
+Problems:
+-I don't know how to code this.
+-Tad might not know how to code this.
+-Tad does not know how to do internet stuff (yet).
+-We don't know how to use farseer (yet).
+-Characters will probably move sillily but that's okay.
+-Not set on a graphics scheme.
+-Gameplay Balance?
+-Where do we get our assets such as sound effects and textures from?
+-How will we able to create maps?
+
