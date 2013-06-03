@@ -1,0 +1,25 @@
+ok it finally works
+
+I'm going to type up what you should do when stuff happens
+
+... in a few seconds
+
+
+Okay, here's what you need to do whenever you want to work on the project
+
+1. open Git bash and navigate to the project directory with cd (so pretty much type "cd Badminton")
+2. type "git init" to initialize the repository
+3. type "git pull", which downloads any changes I might have made to the repository, so the project is up to date
+4. work on it, code and stuff
+5. when you want to update the repository with your changes, go back to the directory in git bash, do the git init
+    stuff if you haven't already
+6. type "git add .", which stages all the files in the project
+7. type "git commit -m "description"", which updates the local repository with the changes you've made
+	"description" is a message you leave to describe what changes you made in a nutshell. Like these     ---->
+8. type "git push" to upload the changes to the remote repository so I can download them
+
+and that's it I'm pretty sure.
+
+Cool
+
+I'm gonna add this file to the project, and then you can try making a new commit.
