@@ -21,14 +21,14 @@ namespace Badminton.Screens
 			enterPressed = true;
 		}
 
-		public GameScreen Update()
+		public GameScreen Update(GameTime gameTime)
 		{
 			if (Keyboard.GetState().IsKeyDown(Keys.Enter))
 			{
 				if (!enterPressed)
 				{
 					enterPressed = true;
-					return LoadMap(); // Change this when there are actual choices
+					return new SingleMap(); // Change this when there are actual choices
 				}
 			}
 			else
@@ -37,14 +37,14 @@ namespace Badminton.Screens
 			return this;
 		}
 
-		private GameScreen LoadMap()
+		public GameScreen Exit()
 		{
-			return new SingleMap();
+			return new MainMenu();
 		}
 
 		public void Draw(SpriteBatch sb)
 		{
-			sb.DrawString(MainGame.basicFont, "This'll be a level select eventually. Press enter to go to test level.", Vector2.Zero, Color.Black);
+			sb.DrawString(MainGame.fnt_basicFont, "This'll be a map select eventually. Press enter to go to test map.", Vector2.Zero, Color.Black);
 		}
 	}
 }

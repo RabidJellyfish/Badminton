@@ -30,7 +30,10 @@ namespace Badminton
 
 		Screens.GameScreen currentScreen;
 
-		public static SpriteFont basicFont;
+		public static SpriteFont fnt_basicFont;
+		public static Texture2D tex_box;
+
+		private bool escapePressed;
 
 		public MainGame()
 		{
@@ -50,6 +53,8 @@ namespace Badminton
 		/// </summary>
 		protected override void Initialize()
 		{
+			escapePressed = true;
+
 			base.Initialize();
 		}
 
@@ -62,7 +67,8 @@ namespace Badminton
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
-			basicFont = Content.Load<SpriteFont>("basicFont");
+			fnt_basicFont = Content.Load<SpriteFont>("fonts/basicFont");
+			tex_box = Content.Load<Texture2D>("textures/box");
 
 			currentScreen = new Screens.MainMenu();
 		}
@@ -85,9 +91,17 @@ namespace Badminton
 		{
 			// Allows the game to exit
 			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-				this.Exit();
+			{
+				if (!escapePressed)
+				{
+					escapePressed = true;
+					currentScreen = currentScreen == null ? null : currentScreen.Exit();
+				}
+			}
+			else
+				escapePressed = false;
 
-			currentScreen = currentScreen.Update();
+			currentScreen = currentScreen == null ? null : currentScreen.Update(gameTime);
 			if (currentScreen == null)
 				this.Exit();
 

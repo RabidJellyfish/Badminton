@@ -87,8 +87,6 @@ namespace Badminton
 			joint.CollideConnected = false;
 
 			capsule.ApplyTorque(10f);
-
-
 		}
 
 		/// <summary>

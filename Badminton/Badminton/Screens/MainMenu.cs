@@ -29,7 +29,7 @@ namespace Badminton.Screens
 			downPressed = true;
 		}
 
-		public GameScreen Update()
+		public GameScreen Update(GameTime gameTime)
 		{
 			// Choose selection
 			if (Keyboard.GetState().IsKeyDown(Keys.Enter))
@@ -40,9 +40,9 @@ namespace Badminton.Screens
 					if (currentChoice == 0)
 						return new SingleMapSelect();
 					else if (currentChoice == 1)
-						return new SingleMapSelect(); // Change this when we make multiplayer lobby
+						return this; // Change this when we make multiplayer lobby
 					else if (currentChoice == 2)
-						return new SingleMapSelect(); // Change this when we make an options menu
+						return this; // Change this when we make an options menu
 					else
 						return null;
 				}
@@ -77,11 +77,16 @@ namespace Badminton.Screens
 			return this;
 		}
 
+		public GameScreen Exit()
+		{
+			return null;
+		}
+
 		public void Draw(SpriteBatch sb)
 		{
 			// Draw buttons and title and stuff here when we have graphics, for now drawing text
 			for (int y = 0; y < 4; y++)
-				sb.DrawString(MainGame.basicFont, choices[y], new Vector2(480 - MainGame.basicFont.MeasureString(choices[y]).X / 2, 300 + y * 32), y == currentChoice ? Color.Yellow : Color.Black);
+				sb.DrawString(MainGame.fnt_basicFont, choices[y], new Vector2(480 - MainGame.fnt_basicFont.MeasureString(choices[y]).X / 2, 300 + y * 32), y == currentChoice ? Color.Yellow : Color.Black);
 		}
 	}
 }
