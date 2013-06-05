@@ -78,8 +78,12 @@ namespace Badminton.Screens
 			}
 			// -----------------------------------------*/
 
-//			Vector2 dif = new Vector2(Mouse.GetState().X*MainGame.PIXEL_TO_METER - testFigure.Position.X, Mouse.GetState().Y*MainGame.PIXEL_TO_METER - testFigure.Position.Y);
-//			testFigure.Move(dif);
+			testFigure.Aim(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);
+			if (Keyboard.GetState().IsKeyDown(Keys.Right))
+				testFigure.WalkRight();
+			else
+				testFigure.Stand();
+			testFigure.Update();
 
 			// These two lines stay here, even after we delete testing stuff
 			world.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
