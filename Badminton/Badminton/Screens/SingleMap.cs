@@ -26,26 +26,29 @@ namespace Badminton.Screens
 		// But for now, this class can be used for hardcoding tests
 
 		World world;
+		Body floor;
 
-		float meterToPixel = 100f; // May want to change these depending on player size
-		float pixelToMeter = 1f / 100f;
-
-		// -- Upright torso test --
-		Body floor, capsule, gyro;
+		/*/ -- Upright torso test --
+		Body capsule, gyro;
 		AngleJoint joint;
-		// ------------------------
+		// ------------------------*/
+
+		StickFigure testFigure;
 
 		public SingleMap()
 		{
 			world = new World(new Vector2(0, 9.8f)); // That'd be cool to have gravity as a map property, so you could play 0G levels
 
-			// ------ Upright torso test ---------------
-			floor = BodyFactory.CreateRectangle(world, 960 * pixelToMeter, 32 * pixelToMeter, 1f);
-			floor.Position = new Vector2(480 * pixelToMeter, 700 * pixelToMeter);
-			floor.BodyType = BodyType.Static;
+			testFigure = new StickFigure(world, new Vector2(480 * MainGame.PIXEL_TO_METER, 480 * MainGame.PIXEL_TO_METER), Category.Cat1);
 
-			capsule = BodyFactory.CreateCapsule(world, 96 * pixelToMeter, 16 * pixelToMeter, 1f);
-			capsule.Position = new Vector2(480 * pixelToMeter, 480 * pixelToMeter);
+			floor = BodyFactory.CreateRectangle(world, 960 * MainGame.PIXEL_TO_METER, 32 * MainGame.PIXEL_TO_METER, 1f);
+			floor.Position = new Vector2(480 * MainGame.PIXEL_TO_METER, 700 * MainGame.PIXEL_TO_METER);
+			floor.BodyType = BodyType.Static;
+			floor.CollisionCategories = Category.All & ~Category.Cat1;
+
+			/*/ ------ Upright torso test ---------------
+			capsule = BodyFactory.CreateCapsule(world, 96 * MainGame.PIXEL_TO_METER, 16 * MainGame.PIXEL_TO_METER, 1f);
+			capsule.Position = new Vector2(480 * MainGame.PIXEL_TO_METER, 480 * MainGame.PIXEL_TO_METER);
 			capsule.BodyType = BodyType.Dynamic;
 			gyro = BodyFactory.CreateBody(world, capsule.Position);
 			gyro.CollidesWith = Category.None;
@@ -58,12 +61,12 @@ namespace Badminton.Screens
 			joint.CollideConnected = false;
 
 			capsule.ApplyTorque(10f);
-			// -----------------------------------------
+			// -----------------------------------------*/
 		}
 
 		public GameScreen Update(GameTime gameTime)
 		{
-			// ------ Upright torso test ---------------
+			/*/ ------ Upright torso test ---------------
 			if (Keyboard.GetState().IsKeyDown(Keys.Enter))
 			{
 				joint.MaxImpulse = 0.01f;
@@ -73,7 +76,10 @@ namespace Badminton.Screens
 				joint.MaxImpulse = 0.0f;
 				capsule.ApplyTorque(0.1f);
 			}
-			// -----------------------------------------
+			// -----------------------------------------*/
+
+//			Vector2 dif = new Vector2(Mouse.GetState().X*MainGame.PIXEL_TO_METER - testFigure.Position.X, Mouse.GetState().Y*MainGame.PIXEL_TO_METER - testFigure.Position.Y);
+//			testFigure.Move(dif);
 
 			// These two lines stay here, even after we delete testing stuff
 			world.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
@@ -87,12 +93,14 @@ namespace Badminton.Screens
 
 		public void Draw(SpriteBatch sb)
 		{
-			// ------ Upright torso test ---------------
-			sb.Draw(MainGame.tex_box, new Rectangle((int)(floor.Position.X * meterToPixel), (int)(floor.Position.Y * meterToPixel), 960, 32), null,
+			testFigure.Draw(sb);
+
+			sb.Draw(MainGame.tex_box, new Rectangle((int)(floor.Position.X * MainGame.METER_TO_PIXEL), (int)(floor.Position.Y * MainGame.METER_TO_PIXEL), 960, 32), null,
 							 Color.White, 0.0f, new Vector2(16, 16), SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_box, new Rectangle((int)(capsule.Position.X * meterToPixel), (int)(capsule.Position.Y * meterToPixel), 32, 96), null,
+			/*/ ------ Upright torso test ---------------
+			sb.Draw(MainGame.tex_box, new Rectangle((int)(capsule.Position.X * MainGame.METER_TO_PIXEL), (int)(capsule.Position.Y * MainGame.METER_TO_PIXEL), 32, 96), null,
 							 Color.White, capsule.Rotation, new Vector2(16, 16), SpriteEffects.None, 0.0f);
-			// -----------------------------------------
+			// -----------------------------------------*/
 		}
 	}
 }

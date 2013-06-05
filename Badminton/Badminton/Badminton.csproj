@@ -113,8 +113,8 @@
     <Compile Include="Screens\SingleMapSelect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Game1.cs" />
     <Compile Include="Screens\SingleMap.cs" />
+    <Compile Include="StickFigure.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />

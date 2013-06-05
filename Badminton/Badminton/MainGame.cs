@@ -28,10 +28,14 @@ namespace Badminton
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
 
+		public const float METER_TO_PIXEL = 60f; // May want to change these depending on player size
+		public const float PIXEL_TO_METER = 1f / 60f;
+
 		Screens.GameScreen currentScreen;
 
 		public static SpriteFont fnt_basicFont;
 		public static Texture2D tex_box;
+		public static Texture2D tex_head, tex_torso, tex_limb;
 
 		private bool escapePressed;
 
@@ -68,7 +72,11 @@ namespace Badminton
 			spriteBatch = new SpriteBatch(GraphicsDevice);
 
 			fnt_basicFont = Content.Load<SpriteFont>("fonts/basicFont");
+
 			tex_box = Content.Load<Texture2D>("textures/box");
+			tex_head = Content.Load<Texture2D>("textures/stick figure/head");
+			tex_limb = Content.Load<Texture2D>("textures/stick figure/limb");
+			tex_torso = Content.Load<Texture2D>("textures/stick figure/torso");
 
 			currentScreen = new Screens.MainMenu();
 		}
@@ -116,7 +124,7 @@ namespace Badminton
 		{
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
-			spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+			spriteBatch.Begin(SpriteSortMode.Texture, BlendState.NonPremultiplied);
 			currentScreen.Draw(spriteBatch);
 			spriteBatch.End();
 

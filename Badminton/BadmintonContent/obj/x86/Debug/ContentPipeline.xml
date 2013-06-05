@@ -19,6 +19,33 @@
       <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\fonts\basicFont.xnb</Output>
       <Time>2013-06-03T15:11:48.7017852-04:00</Time>
     </Item>
+    <Item>
+      <Source>textures\stick figure\head.png</Source>
+      <Name>textures\stick figure\head</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\stick figure\head.xnb</Output>
+      <Time>2013-06-04T22:55:15.9659487-04:00</Time>
+    </Item>
+    <Item>
+      <Source>textures\stick figure\limb.png</Source>
+      <Name>textures\stick figure\limb</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\stick figure\limb.xnb</Output>
+      <Time>2013-06-04T22:52:57.0960058-04:00</Time>
+    </Item>
+    <Item>
+      <Source>textures\stick figure\torso.png</Source>
+      <Name>textures\stick figure\torso</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\stick figure\torso.xnb</Output>
+      <Time>2013-06-04T22:54:10.7372178-04:00</Time>
+    </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
       <TargetPlatform>Windows</TargetPlatform>
