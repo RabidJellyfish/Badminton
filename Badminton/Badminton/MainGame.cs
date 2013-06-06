@@ -30,6 +30,7 @@ namespace Badminton
 
 		public const float METER_TO_PIXEL = 60f; // May want to change these depending on player size
 		public const float PIXEL_TO_METER = 1f / 60f;
+		public static Vector2 RESOLUTION_SCALE = new Vector2(1f, 1f);
 
 		Screens.GameScreen currentScreen;
 
@@ -42,8 +43,11 @@ namespace Badminton
 		public MainGame()
 		{
 			graphics = new GraphicsDeviceManager(this);
-			graphics.PreferredBackBufferHeight = 720;
-			graphics.PreferredBackBufferWidth = 960;
+			graphics.PreferredBackBufferWidth = 1920;
+			graphics.PreferredBackBufferHeight = 1080;
+			RESOLUTION_SCALE.X = graphics.PreferredBackBufferWidth / 1920f;
+			RESOLUTION_SCALE.Y = graphics.PreferredBackBufferHeight / 1080f;
+			graphics.IsFullScreen = true;
 			IsMouseVisible = true;
 			graphics.ApplyChanges();
 			Content.RootDirectory = "Content";

@@ -8,7 +8,7 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\box.xnb</Output>
-      <Time>2013-06-02T19:51:36.9288391-04:00</Time>
+      <Time>2013-06-06T00:26:34.5908725-04:00</Time>
     </Item>
     <Item>
       <Source>fonts\basicFont.spritefont</Source>
@@ -17,7 +17,7 @@
       <Processor>FontDescriptionProcessor</Processor>
       <Options>None</Options>
       <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\fonts\basicFont.xnb</Output>
-      <Time>2013-06-03T15:11:48.7017852-04:00</Time>
+      <Time>2013-06-06T00:26:34.5888724-04:00</Time>
     </Item>
     <Item>
       <Source>textures\stick figure\head.png</Source>
@@ -26,7 +26,7 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\stick figure\head.xnb</Output>
-      <Time>2013-06-04T22:55:15.9659487-04:00</Time>
+      <Time>2013-06-06T00:26:34.5918726-04:00</Time>
     </Item>
     <Item>
       <Source>textures\stick figure\limb.png</Source>
@@ -35,7 +35,7 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\stick figure\limb.xnb</Output>
-      <Time>2013-06-04T22:52:57.0960058-04:00</Time>
+      <Time>2013-06-06T00:26:34.5928727-04:00</Time>
     </Item>
     <Item>
       <Source>textures\stick figure\torso.png</Source>
@@ -44,7 +44,7 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\stick figure\torso.xnb</Output>
-      <Time>2013-06-04T22:54:10.7372178-04:00</Time>
+      <Time>2013-06-06T00:26:34.5938727-04:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>

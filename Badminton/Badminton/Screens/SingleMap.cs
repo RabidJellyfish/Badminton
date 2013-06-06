@@ -27,11 +27,7 @@ namespace Badminton.Screens
 
 		World world;
 		Body floor;
-
-		/*/ -- Upright torso test --
-		Body capsule, gyro;
-		AngleJoint joint;
-		// ------------------------*/
+		Body wall;
 
 		StickFigure testFigure;
 
@@ -46,52 +42,49 @@ namespace Badminton.Screens
 			floor.BodyType = BodyType.Static;
 			floor.CollisionCategories = Category.All & ~Category.Cat1;
 
-			/*/ ------ Upright torso test ---------------
-			capsule = BodyFactory.CreateCapsule(world, 96 * MainGame.PIXEL_TO_METER, 16 * MainGame.PIXEL_TO_METER, 1f);
-			capsule.Position = new Vector2(480 * MainGame.PIXEL_TO_METER, 480 * MainGame.PIXEL_TO_METER);
-			capsule.BodyType = BodyType.Dynamic;
-			gyro = BodyFactory.CreateBody(world, capsule.Position);
-			gyro.CollidesWith = Category.None;
-			gyro.BodyType = BodyType.Dynamic;
-			gyro.Mass = 0.00001f;
-
-			joint = JointFactory.CreateAngleJoint(world, capsule, gyro);
-			joint.MaxImpulse = 0.0f;
-			joint.TargetAngle = 0.0f;
-			joint.CollideConnected = false;
-
-			capsule.ApplyTorque(10f);
-			// -----------------------------------------*/
+			wall = BodyFactory.CreateRectangle(world, 32 * MainGame.PIXEL_TO_METER, 720 * MainGame.PIXEL_TO_METER, 1f);
+			wall.Position = new Vector2(16 * MainGame.PIXEL_TO_METER, 360 * MainGame.PIXEL_TO_METER);
+			wall.BodyType = BodyType.Static;
+			wall.CollisionCategories = Category.All & ~Category.Cat1;
 		}
 
 		public GameScreen Update(GameTime gameTime)
 		{
-			/*/ ------ Upright torso test ---------------
-			if (Keyboard.GetState().IsKeyDown(Keys.Enter))
-			{
-				joint.MaxImpulse = 0.01f;
-			}
-			else
-			{
-				joint.MaxImpulse = 0.0f;
-				capsule.ApplyTorque(0.1f);
-			}
-			// -----------------------------------------*/
-
 			if (Mouse.GetState().RightButton == ButtonState.Pressed)
 				testFigure.Aim(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);
 
-			if (Keyboard.GetState().IsKeyDown(Keys.Space))
-				testFigure.Jump();
-			else if (Keyboard.GetState().IsKeyDown(Keys.D))
-				testFigure.WalkRight();
-			else if (Keyboard.GetState().IsKeyDown(Keys.A))
-				testFigure.WalkLeft();
-			else
-				testFigure.Stand();
+			bool stand = true;
 
-			if (Keyboard.GetState().IsKeyDown(Keys.LeftControl) && !Keyboard.GetState().IsKeyDown(Keys.Space))
-				testFigure.Squat();
+			if (Keyboard.GetState().IsKeyDown(Keys.W))
+			{
+				testFigure.Jump();
+				stand = false;
+			}
+
+			if (Keyboard.GetState().IsKeyDown(Keys.D))
+			{
+				testFigure.WalkRight();
+				stand = false;
+			}
+			else if (Keyboard.GetState().IsKeyDown(Keys.A))
+			{
+				testFigure.WalkLeft();
+				stand = false;
+			}
+
+			if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
+			{
+				if (!Keyboard.GetState().IsKeyDown(Keys.W))
+				{
+					testFigure.Crouching = true;
+					stand = false;
+				}
+			}
+			else
+				testFigure.Crouching = false;
+
+			if (stand)
+				testFigure.Stand();
 
 			testFigure.Update();
 
@@ -109,12 +102,14 @@ namespace Badminton.Screens
 		{
 			testFigure.Draw(sb);
 
-			sb.Draw(MainGame.tex_box, new Rectangle((int)(floor.Position.X * MainGame.METER_TO_PIXEL), (int)(floor.Position.Y * MainGame.METER_TO_PIXEL), 960, 32), null,
-							 Color.White, 0.0f, new Vector2(16, 16), SpriteEffects.None, 0.0f);
-			/*/ ------ Upright torso test ---------------
-			sb.Draw(MainGame.tex_box, new Rectangle((int)(capsule.Position.X * MainGame.METER_TO_PIXEL), (int)(capsule.Position.Y * MainGame.METER_TO_PIXEL), 32, 96), null,
-							 Color.White, capsule.Rotation, new Vector2(16, 16), SpriteEffects.None, 0.0f);
-			// -----------------------------------------*/
+			sb.Draw(MainGame.tex_box, new Rectangle((int)(floor.Position.X * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE.X),
+													(int)(floor.Position.Y * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE.Y),
+													(int)(960 * MainGame.RESOLUTION_SCALE.X), (int)(32 * MainGame.RESOLUTION_SCALE.Y)), null,
+							 Color.White, floor.Rotation, new Vector2(16, 16), SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_box, new Rectangle((int)(wall.Position.X * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE.X),
+													(int)(wall.Position.Y * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE.Y),
+													(int)(32 * MainGame.RESOLUTION_SCALE.X), (int)(720 * MainGame.RESOLUTION_SCALE.Y)), null,
+							 Color.White, wall.Rotation, new Vector2(16, 16), SpriteEffects.None, 0.0f);
 		}
 	}
 }

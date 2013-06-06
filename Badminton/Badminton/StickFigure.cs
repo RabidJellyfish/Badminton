@@ -39,17 +39,17 @@ namespace Badminton
 		}
 		
 		public bool Aiming { get; set; }
+		public bool Crouching { get; set; }
 
 		private float maxImpulse;
 		private Vector2 aimVector;
 		private int walkStage = 0;
-		private bool crouching;
 		private bool onGround;
 
 		public StickFigure(World world, Vector2 position, Category collisionCat)
 		{
 			maxImpulse = 10f;
-			crouching = false;
+			Crouching = false;
 			Aiming = false;
 			GenerateBody(world, position, collisionCat);
 			ConnectBody(world);
@@ -240,7 +240,7 @@ namespace Badminton
 		/// </summary>
 		public void Stand()
 		{
-			crouching = false;
+			Crouching = false;
 			upright.TargetAngle = 0.0f;
 			walkStage = 0;
 			leftHip.TargetAngle = 3 * MathHelper.PiOver4;
@@ -273,7 +273,7 @@ namespace Badminton
 		public void WalkRight()
 		{
 			upright.TargetAngle = -0.1f;
-			if (torso.LinearVelocity.X < 4 && !crouching)
+			if (torso.LinearVelocity.X < 4 && !Crouching)
 				torso.ApplyForce(new Vector2(30, 0));
 			AngleJoint[] checkThese = new AngleJoint[] { leftHip, rightHip };
 			if (walkStage == 0)
@@ -328,7 +328,7 @@ namespace Badminton
 		public void WalkLeft()
 		{
 			upright.TargetAngle = 0.1f;
-			if (torso.LinearVelocity.X > -4 && !crouching)
+			if (torso.LinearVelocity.X > -4 && !Crouching)
 				torso.ApplyForce(new Vector2(-30, 0));
 			AngleJoint[] checkThese = new AngleJoint[] { leftHip, rightHip };
 			if (walkStage == 0)
@@ -394,16 +394,18 @@ namespace Badminton
 			leftLowerLeg.Friction = 100.0f;
 			rightLowerLeg.Friction = 100.0f;
 
-			if (onGround)
-				torso.ApplyLinearImpulse(Vector2.UnitY * (crouching ? -12 : -1));
+			if (onGround && Crouching)
+			{
+				torso.ApplyLinearImpulse(Vector2.UnitY * -30);
+				Crouching = false;
+			}
 		}
 
 		/// <summary>
 		/// Makes the figure crouch
 		/// </summary>
-		public void Squat()
+		public void Crouch()
 		{
-			crouching = true;
 			leftLowerLeg.Friction = 0.1f;
 			rightLowerLeg.Friction = 0.1f;
 			leftHip.TargetAngle = MathHelper.PiOver4;
@@ -432,6 +434,8 @@ namespace Badminton
 		public void Update()
 		{
 			UpdateArms();
+			if (Crouching)
+				Crouch();
 		}
 
 		/// <summary>
@@ -485,16 +489,16 @@ namespace Badminton
 
 		public void Draw(SpriteBatch sb)
 		{
-			sb.Draw(MainGame.tex_torso, torso.Position * MainGame.METER_TO_PIXEL, null, Color.White, torso.Rotation, new Vector2(5f, 20f), 1.0f, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, leftUpperArm.Position * MainGame.METER_TO_PIXEL, null, Color.White, leftUpperArm.Rotation, new Vector2(5f, 12.5f), 1.0f, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, rightUpperArm.Position * MainGame.METER_TO_PIXEL, null, Color.White, rightUpperArm.Rotation, new Vector2(5f, 12.5f), 1.0f, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, leftLowerArm.Position * MainGame.METER_TO_PIXEL, null, Color.White, leftLowerArm.Rotation, new Vector2(5f, 12.5f), 1.0f, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, rightLowerArm.Position * MainGame.METER_TO_PIXEL, null, Color.White, rightLowerArm.Rotation, new Vector2(5f, 12.5f), 1.0f, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, leftUpperLeg.Position * MainGame.METER_TO_PIXEL, null, Color.White, leftUpperLeg.Rotation, new Vector2(5f, 12.5f), 1.0f, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, rightUpperLeg.Position * MainGame.METER_TO_PIXEL, null, Color.White, rightUpperLeg.Rotation, new Vector2(5f, 12.5f), 1.0f, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, leftLowerLeg.Position * MainGame.METER_TO_PIXEL, null, Color.White, leftLowerLeg.Rotation, new Vector2(5f, 12.5f), 1.0f, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, rightLowerLeg.Position * MainGame.METER_TO_PIXEL, null, Color.White, rightLowerLeg.Rotation, new Vector2(5f, 12.5f), 1.0f, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_head, head.Position * MainGame.METER_TO_PIXEL, null, Color.White, head.Rotation, new Vector2(12.5f, 12.5f), 1.0f, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_torso, torso.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, torso.Rotation, new Vector2(5f, 20f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_limb, leftUpperArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, leftUpperArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_limb, rightUpperArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, rightUpperArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_limb, leftLowerArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, leftLowerArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_limb, rightLowerArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, rightLowerArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_limb, leftUpperLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, leftUpperLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_limb, rightUpperLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, rightUpperLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_limb, leftLowerLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, leftLowerLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_limb, rightLowerLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, rightLowerLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			sb.Draw(MainGame.tex_head, head.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, head.Rotation, new Vector2(12.5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
 
 			// Debug
 //			sb.DrawString(MainGame.fnt_basicFont, "x", LeftHandPosition * MainGame.METER_TO_PIXEL, Color.Red);
