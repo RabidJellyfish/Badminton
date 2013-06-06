@@ -26,8 +26,7 @@ namespace Badminton.Screens
 		// But for now, this class can be used for hardcoding tests
 
 		World world;
-		Body floor;
-		Body wall;
+		List<Wall> walls;
 
 		StickFigure testFigure;
 
@@ -35,17 +34,20 @@ namespace Badminton.Screens
 		{
 			world = new World(new Vector2(0, 9.8f)); // That'd be cool to have gravity as a map property, so you could play 0G levels
 
-			testFigure = new StickFigure(world, new Vector2(480 * MainGame.PIXEL_TO_METER, 480 * MainGame.PIXEL_TO_METER), Category.Cat1);
+			testFigure = new StickFigure(world, new Vector2(480 * MainGame.PIXEL_TO_METER, 480 * MainGame.PIXEL_TO_METER), Category.Cat1, Color.Red);
 
-			floor = BodyFactory.CreateRectangle(world, 960 * MainGame.PIXEL_TO_METER, 32 * MainGame.PIXEL_TO_METER, 1f);
-			floor.Position = new Vector2(480 * MainGame.PIXEL_TO_METER, 700 * MainGame.PIXEL_TO_METER);
-			floor.BodyType = BodyType.Static;
-			floor.CollisionCategories = Category.All & ~Category.Cat1;
-
-			wall = BodyFactory.CreateRectangle(world, 32 * MainGame.PIXEL_TO_METER, 720 * MainGame.PIXEL_TO_METER, 1f);
-			wall.Position = new Vector2(16 * MainGame.PIXEL_TO_METER, 360 * MainGame.PIXEL_TO_METER);
-			wall.BodyType = BodyType.Static;
-			wall.CollisionCategories = Category.All & ~Category.Cat1;
+			walls = new List<Wall>();
+			walls.Add(new Wall(world, 480 * MainGame.PIXEL_TO_METER, 700 * MainGame.PIXEL_TO_METER, 960 * MainGame.PIXEL_TO_METER, 32 * MainGame.PIXEL_TO_METER, 0.0f));
+			walls.Add(new Wall(world, 16 * MainGame.PIXEL_TO_METER, 540 * MainGame.PIXEL_TO_METER, 32 * MainGame.PIXEL_TO_METER, 1080 * MainGame.PIXEL_TO_METER, 0.0f));
+			walls.Add(new Wall(world, 960 * MainGame.PIXEL_TO_METER, 1040 * MainGame.PIXEL_TO_METER, 1920 * MainGame.PIXEL_TO_METER, 32 * MainGame.PIXEL_TO_METER, 0.0f));
+			walls.Add(new Wall(world, 1500 * MainGame.PIXEL_TO_METER, 960 * MainGame.PIXEL_TO_METER, 870 * MainGame.PIXEL_TO_METER, 120 * MainGame.PIXEL_TO_METER, 0.0f));
+			walls.Add(new Wall(world, 1450 * MainGame.PIXEL_TO_METER, 865 * MainGame.PIXEL_TO_METER, 248 * MainGame.PIXEL_TO_METER, 98 * MainGame.PIXEL_TO_METER, -(float)Math.PI / 6));
+			walls.Add(new Wall(world, 1735 * MainGame.PIXEL_TO_METER, 840 * MainGame.PIXEL_TO_METER, 402 * MainGame.PIXEL_TO_METER, 176 * MainGame.PIXEL_TO_METER, 0.0f));
+			walls.Add(new Wall(world, 1904 * MainGame.PIXEL_TO_METER, 540 * MainGame.PIXEL_TO_METER, 32 * MainGame.PIXEL_TO_METER, 1080 * MainGame.PIXEL_TO_METER, 0.0f));
+			walls.Add(new Wall(world, 1859 * MainGame.PIXEL_TO_METER, 717 * MainGame.PIXEL_TO_METER, 109 * MainGame.PIXEL_TO_METER, 123 * MainGame.PIXEL_TO_METER, 0.0f));
+			walls.Add(new Wall(world, 1600 * MainGame.PIXEL_TO_METER, 570 * MainGame.PIXEL_TO_METER, 122 * MainGame.PIXEL_TO_METER, 104 * MainGame.PIXEL_TO_METER, 0.0f));
+			walls.Add(new Wall(world, 1320 * MainGame.PIXEL_TO_METER, 487 * MainGame.PIXEL_TO_METER, 113 * MainGame.PIXEL_TO_METER, 107 * MainGame.PIXEL_TO_METER, 0.0f));
+			walls.Add(new Wall(world, 180 * MainGame.PIXEL_TO_METER, 300 * MainGame.PIXEL_TO_METER, 41 * MainGame.PIXEL_TO_METER, 370 * MainGame.PIXEL_TO_METER, 0.0f));
 		}
 
 		public GameScreen Update(GameTime gameTime)
@@ -102,14 +104,8 @@ namespace Badminton.Screens
 		{
 			testFigure.Draw(sb);
 
-			sb.Draw(MainGame.tex_box, new Rectangle((int)(floor.Position.X * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE.X),
-													(int)(floor.Position.Y * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE.Y),
-													(int)(960 * MainGame.RESOLUTION_SCALE.X), (int)(32 * MainGame.RESOLUTION_SCALE.Y)), null,
-							 Color.White, floor.Rotation, new Vector2(16, 16), SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_box, new Rectangle((int)(wall.Position.X * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE.X),
-													(int)(wall.Position.Y * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE.Y),
-													(int)(32 * MainGame.RESOLUTION_SCALE.X), (int)(720 * MainGame.RESOLUTION_SCALE.Y)), null,
-							 Color.White, wall.Rotation, new Vector2(16, 16), SpriteEffects.None, 0.0f);
+			foreach (Wall w in walls)
+				w.Draw(sb);
 		}
 	}
 }

@@ -115,6 +115,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Screens\SingleMap.cs" />
     <Compile Include="StickFigure.cs" />
+    <Compile Include="Wall.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />

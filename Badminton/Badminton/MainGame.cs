@@ -47,7 +47,7 @@ namespace Badminton
 			graphics.PreferredBackBufferHeight = 1080;
 			RESOLUTION_SCALE.X = graphics.PreferredBackBufferWidth / 1920f;
 			RESOLUTION_SCALE.Y = graphics.PreferredBackBufferHeight / 1080f;
-			graphics.IsFullScreen = true;
+			graphics.IsFullScreen = false;
 			IsMouseVisible = true;
 			graphics.ApplyChanges();
 			Content.RootDirectory = "Content";

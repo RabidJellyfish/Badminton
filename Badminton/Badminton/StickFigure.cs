@@ -17,11 +17,20 @@ namespace Badminton
 {
 	class StickFigure
 	{
+		private World world;
+
+		// Ragdoll
 		private Body torso, head, leftUpperArm, rightUpperArm, leftLowerArm, rightLowerArm, leftUpperLeg, rightUpperLeg, leftLowerLeg, rightLowerLeg;
 		private Body gyro;
 		private AngleJoint neck, leftShoulder, rightShoulder, leftElbow, rightElbow, leftHip, rightHip, leftKnee, rightKnee;
+		private RevoluteJoint r_neck, r_leftShoulder, r_rightShoulder, r_leftElbow, r_rightElbow, r_leftHip, r_rightHip, r_leftKnee, r_rightKnee;
 		private AngleJoint upright;
 
+		// Limb control
+		private Dictionary<Body, float> health;
+		private float maxImpulse;
+
+		// Position properties
 		public Vector2 Position { get { return torso.Position; } }
 		public Vector2 LeftHandPosition
 		{
@@ -38,23 +47,30 @@ namespace Badminton
 			}
 		}
 		
+		// Action flags
 		public bool Aiming { get; set; }
 		public bool Crouching { get; set; }
 
-		private float maxImpulse;
+		// Other
 		private Vector2 aimVector;
 		private int walkStage = 0;
 		private bool onGround;
+		private Color color;
 
-		public StickFigure(World world, Vector2 position, Category collisionCat)
+		public StickFigure(World world, Vector2 position, Category collisionCat, Color c)
 		{
-			maxImpulse = 10f;
+			this.world = world;
+			maxImpulse = 0.2f;
 			Crouching = false;
 			Aiming = false;
+			health = new Dictionary<Body, float>();
+			this.color = c;
+
 			GenerateBody(world, position, collisionCat);
 			ConnectBody(world);
 
 			onGround = false;
+			// Do this for ALL the limbs
 			leftLowerLeg.OnCollision += new OnCollisionEventHandler(OnCollision);
 			rightLowerLeg.OnCollision += new OnCollisionEventHandler(OnCollision);
 			leftLowerLeg.OnSeparation += new OnSeparationEventHandler(OnSeparation);
@@ -83,12 +99,14 @@ namespace Badminton
 			gyro.BodyType = BodyType.Dynamic;
 			gyro.Mass = 0.00001f;
 			gyro.FixedRotation = true;
+			health.Add(torso, 1.0f);
 
 			head = BodyFactory.CreateCircle(world, 12.5f * MainGame.PIXEL_TO_METER, 1.0f);
 			head.Position = torso.Position - new Vector2(0, 29f) * MainGame.PIXEL_TO_METER;
 			head.BodyType = BodyType.Dynamic;
 			head.CollisionCategories = collisionCat;
 			head.CollidesWith = Category.All & ~collisionCat;
+			health.Add(head, 1.0f);
 
 			leftUpperArm = BodyFactory.CreateCapsule(world, 25 * MainGame.PIXEL_TO_METER, 5 * MainGame.PIXEL_TO_METER, 0.1f);
 			leftUpperArm.Rotation = -MathHelper.PiOver2;
@@ -96,6 +114,7 @@ namespace Badminton
 			leftUpperArm.BodyType = BodyType.Dynamic;
 			leftUpperArm.CollisionCategories = collisionCat;
 			leftUpperArm.CollidesWith = Category.All & ~collisionCat;
+			health.Add(leftUpperArm, 1.0f);
 
 			rightUpperArm = BodyFactory.CreateCapsule(world, 25 * MainGame.PIXEL_TO_METER, 5 * MainGame.PIXEL_TO_METER, 0.1f);
 			rightUpperArm.Rotation = MathHelper.PiOver2;
@@ -103,6 +122,7 @@ namespace Badminton
 			rightUpperArm.BodyType = BodyType.Dynamic;
 			rightUpperArm.CollisionCategories = collisionCat;
 			rightUpperArm.CollidesWith = Category.All & ~collisionCat;
+			health.Add(rightUpperArm, 1.0f);
 
 			leftLowerArm = BodyFactory.CreateCapsule(world, 25 * MainGame.PIXEL_TO_METER, 5 * MainGame.PIXEL_TO_METER, 0.1f);
 			leftLowerArm.Rotation = -MathHelper.PiOver2;
@@ -110,6 +130,7 @@ namespace Badminton
 			leftLowerArm.BodyType = BodyType.Dynamic;
 			leftLowerArm.CollisionCategories = collisionCat;
 			leftLowerArm.CollidesWith = Category.All & ~collisionCat;
+			health.Add(leftLowerArm, 1.0f);
 
 			rightLowerArm = BodyFactory.CreateCapsule(world, 25 * MainGame.PIXEL_TO_METER, 5 * MainGame.PIXEL_TO_METER, 0.1f);
 			rightLowerArm.Rotation = MathHelper.PiOver2;
@@ -117,6 +138,7 @@ namespace Badminton
 			rightLowerArm.BodyType = BodyType.Dynamic;
 			rightLowerArm.CollisionCategories = collisionCat;
 			rightLowerArm.CollidesWith = Category.All & ~collisionCat;
+			health.Add(rightLowerArm, 1.0f);
 
 			leftUpperLeg = BodyFactory.CreateCapsule(world, 25 * MainGame.PIXEL_TO_METER, 5 * MainGame.PIXEL_TO_METER, 5f);
 			leftUpperLeg.Rotation = -3 * MathHelper.PiOver4;
@@ -125,6 +147,7 @@ namespace Badminton
 			leftUpperLeg.CollisionCategories = collisionCat;
 			leftUpperLeg.CollidesWith = Category.All & ~collisionCat;
 			leftUpperLeg.Restitution = 0.15f;
+			health.Add(leftUpperLeg, 1.0f);
 
 			rightUpperLeg = BodyFactory.CreateCapsule(world, 25 * MainGame.PIXEL_TO_METER, 5 * MainGame.PIXEL_TO_METER, 5f);
 			rightUpperLeg.Rotation = 3 * MathHelper.PiOver4;
@@ -133,6 +156,7 @@ namespace Badminton
 			rightUpperLeg.CollisionCategories = collisionCat;
 			rightUpperLeg.CollidesWith = Category.All & ~collisionCat;
 			rightUpperLeg.Restitution = 0.15f;
+			health.Add(rightUpperLeg, 1.0f);
 
 			leftLowerLeg = BodyFactory.CreateCapsule(world, 25 * MainGame.PIXEL_TO_METER, 5 * MainGame.PIXEL_TO_METER, 10.0f);
 			leftLowerLeg.Position = torso.Position + new Vector2(-50f / (float)Math.Sqrt(8) + 6, 25 + 25f / (float)Math.Sqrt(8)) * MainGame.PIXEL_TO_METER;
@@ -141,6 +165,7 @@ namespace Badminton
 			leftLowerLeg.CollidesWith = Category.All & ~collisionCat;
 			leftLowerLeg.Restitution = 0.15f;
 			leftLowerLeg.Friction = 3.0f;
+			health.Add(leftLowerLeg, 1.0f);
 
 			rightLowerLeg = BodyFactory.CreateCapsule(world, 25 * MainGame.PIXEL_TO_METER, 5 * MainGame.PIXEL_TO_METER, 10.0f);
 			rightLowerLeg.Position = torso.Position + new Vector2(50f / (float)Math.Sqrt(8) - 6, 25 + 25f / (float)Math.Sqrt(8)) * MainGame.PIXEL_TO_METER;
@@ -149,6 +174,7 @@ namespace Badminton
 			rightLowerLeg.CollidesWith = Category.All & ~collisionCat;
 			rightLowerLeg.Restitution = 0.15f;
 			rightLowerLeg.Friction = 3.0f;
+			health.Add(rightLowerLeg, 1.0f);
 		}
 
 		/// <summary>
@@ -162,51 +188,55 @@ namespace Badminton
 			upright.TargetAngle = 0.0f;
 			upright.CollideConnected = false;
 
-			RevoluteJoint r_neck = JointFactory.CreateRevoluteJoint(world, head, torso, -Vector2.UnitY * 20 * MainGame.PIXEL_TO_METER);
+			r_neck = JointFactory.CreateRevoluteJoint(world, head, torso, -Vector2.UnitY * 20 * MainGame.PIXEL_TO_METER);
 			neck = JointFactory.CreateAngleJoint(world, head, torso);
 			neck.CollideConnected = false;
 			neck.MaxImpulse = maxImpulse;
 
-			RevoluteJoint r_leftShoulder = JointFactory.CreateRevoluteJoint(world, leftUpperArm, torso, -Vector2.UnitY * 15 * MainGame.PIXEL_TO_METER);
+			r_leftShoulder = JointFactory.CreateRevoluteJoint(world, leftUpperArm, torso, -Vector2.UnitY * 15 * MainGame.PIXEL_TO_METER);
 			leftShoulder = JointFactory.CreateAngleJoint(world, leftUpperArm, torso);
 			leftShoulder.CollideConnected = false;
 			leftShoulder.MaxImpulse = maxImpulse;
 
-			RevoluteJoint r_rightShoulder = JointFactory.CreateRevoluteJoint(world, rightUpperArm, torso, -Vector2.UnitY * 15 * MainGame.PIXEL_TO_METER);
+			r_rightShoulder = JointFactory.CreateRevoluteJoint(world, rightUpperArm, torso, -Vector2.UnitY * 15 * MainGame.PIXEL_TO_METER);
 			rightShoulder = JointFactory.CreateAngleJoint(world, rightUpperArm, torso);
 			rightShoulder.CollideConnected = false;
 			rightShoulder.MaxImpulse = maxImpulse;
 
-			RevoluteJoint r_leftElbow = JointFactory.CreateRevoluteJoint(world, leftLowerArm, leftUpperArm, -Vector2.UnitY * 7.5f * MainGame.PIXEL_TO_METER);
+			r_leftElbow = JointFactory.CreateRevoluteJoint(world, leftLowerArm, leftUpperArm, -Vector2.UnitY * 7.5f * MainGame.PIXEL_TO_METER);
 			leftElbow = JointFactory.CreateAngleJoint(world, leftLowerArm, leftUpperArm);
 			leftElbow.CollideConnected = false;
 			leftElbow.MaxImpulse = maxImpulse;
 
-			RevoluteJoint r_rightElbow = JointFactory.CreateRevoluteJoint(world, rightLowerArm, rightUpperArm, -Vector2.UnitY * 7.5f * MainGame.PIXEL_TO_METER);
+			r_rightElbow = JointFactory.CreateRevoluteJoint(world, rightLowerArm, rightUpperArm, -Vector2.UnitY * 7.5f * MainGame.PIXEL_TO_METER);
 			rightElbow = JointFactory.CreateAngleJoint(world, rightLowerArm, rightUpperArm);
 			rightElbow.CollideConnected = false;
 			rightElbow.MaxImpulse = maxImpulse;
 
-			RevoluteJoint r_leftHip = JointFactory.CreateRevoluteJoint(world, leftUpperLeg, torso, Vector2.UnitY * 15 * MainGame.PIXEL_TO_METER);
+			r_leftHip = JointFactory.CreateRevoluteJoint(world, leftUpperLeg, torso, Vector2.UnitY * 15 * MainGame.PIXEL_TO_METER);
 			leftHip = JointFactory.CreateAngleJoint(world, leftUpperLeg, torso);
 			leftHip.CollideConnected = false;
 			leftHip.MaxImpulse = maxImpulse;
 
-			RevoluteJoint r_rightHip = JointFactory.CreateRevoluteJoint(world, rightUpperLeg, torso, Vector2.UnitY * 15 * MainGame.PIXEL_TO_METER);
+			r_rightHip = JointFactory.CreateRevoluteJoint(world, rightUpperLeg, torso, Vector2.UnitY * 15 * MainGame.PIXEL_TO_METER);
 			rightHip = JointFactory.CreateAngleJoint(world, rightUpperLeg, torso);
 			rightHip.CollideConnected = false;
 			rightHip.MaxImpulse = maxImpulse;
 
-			RevoluteJoint r_leftKnee = JointFactory.CreateRevoluteJoint(world, leftLowerLeg, leftUpperLeg, -Vector2.UnitY * 7.5f * MainGame.PIXEL_TO_METER);
+			r_leftKnee = JointFactory.CreateRevoluteJoint(world, leftLowerLeg, leftUpperLeg, -Vector2.UnitY * 7.5f * MainGame.PIXEL_TO_METER);
 			leftKnee = JointFactory.CreateAngleJoint(world, leftUpperLeg, leftLowerLeg);
 			leftKnee.CollideConnected = false;
 			leftKnee.MaxImpulse = maxImpulse;
 
-			RevoluteJoint r_rightKnee = JointFactory.CreateRevoluteJoint(world, rightLowerLeg, rightUpperLeg, -Vector2.UnitY * 7.5f * MainGame.PIXEL_TO_METER);
+			r_rightKnee = JointFactory.CreateRevoluteJoint(world, rightLowerLeg, rightUpperLeg, -Vector2.UnitY * 7.5f * MainGame.PIXEL_TO_METER);
 			rightKnee = JointFactory.CreateAngleJoint(world, rightUpperLeg, rightLowerLeg);
 			rightKnee.CollideConnected = false;
 			rightKnee.MaxImpulse = maxImpulse;
 		}
+
+		#endregion
+
+		#region Collision handlers
 
 		/// <summary>
 		/// Event handler for collisions between two fixtures
@@ -264,7 +294,7 @@ namespace Badminton
 		public void Aim(Vector2 position)
 		{
 			this.Aiming = true;
-			this.aimVector = position - (torso.Position - 15f * Vector2.UnitY * MainGame.PIXEL_TO_METER);
+			this.aimVector = position - (torso.Position * MainGame.RESOLUTION_SCALE - 15f * Vector2.UnitY * MainGame.PIXEL_TO_METER * MainGame.RESOLUTION_SCALE);
 		}
 
 		/// <summary>
@@ -273,8 +303,8 @@ namespace Badminton
 		public void WalkRight()
 		{
 			upright.TargetAngle = -0.1f;
-			if (torso.LinearVelocity.X < 4 && !Crouching)
-				torso.ApplyForce(new Vector2(30, 0));
+			if (torso.LinearVelocity.X < (onGround ? 4 : 3) && !(Crouching && onGround))
+				torso.ApplyForce(new Vector2(150, 0) * maxImpulse * health[torso] * health[head]); // Change limb dependency
 			AngleJoint[] checkThese = new AngleJoint[] { leftHip, rightHip };
 			if (walkStage == 0)
 			{
@@ -282,7 +312,7 @@ namespace Badminton
 				leftKnee.TargetAngle = -MathHelper.PiOver2 - torso.Rotation;
 				rightHip.TargetAngle = -3 * MathHelper.PiOver4 - torso.Rotation;
 				rightKnee.TargetAngle = -3 * MathHelper.PiOver4 - torso.Rotation;
-				rightKnee.MaxImpulse = maxImpulse * 3;
+				rightKnee.MaxImpulse = maxImpulse * 3 * health[rightLowerLeg] * health[rightUpperLeg];
 				leftLowerLeg.Friction = 0.0f;
 				rightLowerLeg.Friction = 1000f;
 				if (JointsAreInPosition(checkThese))
@@ -294,7 +324,7 @@ namespace Badminton
 				leftKnee.TargetAngle = -MathHelper.PiOver2 - torso.Rotation;
 				rightHip.TargetAngle = -5 * MathHelper.PiOver4 - torso.Rotation;
 				rightKnee.TargetAngle = -(float)Math.PI - torso.Rotation;
-				rightKnee.MaxImpulse = maxImpulse;
+				rightKnee.MaxImpulse = maxImpulse * health[rightLowerLeg] * health[rightUpperLeg];
 				if (JointsAreInPosition(checkThese))
 					walkStage = 2;
 			}
@@ -302,7 +332,7 @@ namespace Badminton
 			{
 				leftHip.TargetAngle = 5 * MathHelper.PiOver4 - torso.Rotation;
 				leftKnee.TargetAngle = -3 * MathHelper.PiOver4 - torso.Rotation;
-				leftKnee.MaxImpulse = maxImpulse * 3;
+				leftKnee.MaxImpulse = maxImpulse * 3 * health[leftLowerLeg] * health[leftUpperLeg];
 				rightHip.TargetAngle = -(float)Math.PI - torso.Rotation;
 				rightKnee.TargetAngle = -MathHelper.PiOver2 - torso.Rotation;
 				rightLowerLeg.Friction = 0.0f;
@@ -314,7 +344,7 @@ namespace Badminton
 			{
 				leftHip.TargetAngle = 3 * MathHelper.PiOver4 - torso.Rotation;
 				leftKnee.TargetAngle = -(float)Math.PI - torso.Rotation;
-				leftKnee.MaxImpulse = maxImpulse;
+				leftKnee.MaxImpulse = maxImpulse * health[leftLowerLeg] * health[leftUpperLeg];
 				rightHip.TargetAngle = -MathHelper.PiOver2 - torso.Rotation;
 				rightKnee.TargetAngle = -MathHelper.PiOver2 - torso.Rotation;
 				if (JointsAreInPosition(checkThese))
@@ -328,8 +358,8 @@ namespace Badminton
 		public void WalkLeft()
 		{
 			upright.TargetAngle = 0.1f;
-			if (torso.LinearVelocity.X > -4 && !Crouching)
-				torso.ApplyForce(new Vector2(-30, 0));
+			if (torso.LinearVelocity.X > (onGround ? -4 : -3) && !(Crouching && onGround))
+				torso.ApplyForce(new Vector2(-150, 0) * maxImpulse * health[torso] * health[head]); // Change limb dependency
 			AngleJoint[] checkThese = new AngleJoint[] { leftHip, rightHip };
 			if (walkStage == 0)
 			{
@@ -337,7 +367,7 @@ namespace Badminton
 				rightKnee.TargetAngle = -3 * MathHelper.PiOver2 - torso.Rotation;
 				leftHip.TargetAngle = 3 * MathHelper.PiOver4 - torso.Rotation;
 				leftKnee.TargetAngle = -5 * MathHelper.PiOver4 - torso.Rotation;
-				leftKnee.MaxImpulse = maxImpulse * 3;
+				leftKnee.MaxImpulse = maxImpulse * 3 * health[leftLowerLeg] * health[leftUpperLeg];
 				leftLowerLeg.Friction = 1000.0f;
 				rightLowerLeg.Friction = 0f;
 				if (JointsAreInPosition(checkThese))
@@ -349,7 +379,7 @@ namespace Badminton
 				rightKnee.TargetAngle = -3 * MathHelper.PiOver2 - torso.Rotation;
 				leftHip.TargetAngle = 5 * MathHelper.PiOver4 - torso.Rotation;
 				leftKnee.TargetAngle = -(float)Math.PI - torso.Rotation;
-				leftKnee.MaxImpulse = maxImpulse;
+				leftKnee.MaxImpulse = maxImpulse * health[leftLowerLeg] * health[leftUpperLeg];
 				if (JointsAreInPosition(checkThese))
 					walkStage = 2;
 			}
@@ -357,7 +387,7 @@ namespace Badminton
 			{
 				rightHip.TargetAngle = -5 * MathHelper.PiOver4 - torso.Rotation;
 				rightKnee.TargetAngle = -5 * MathHelper.PiOver4 - torso.Rotation;
-				rightKnee.MaxImpulse = maxImpulse * 3;
+				rightKnee.MaxImpulse = maxImpulse * 3 * health[rightLowerLeg] * health[rightUpperLeg];
 				leftHip.TargetAngle = (float)Math.PI - torso.Rotation;
 				leftKnee.TargetAngle = -3 * MathHelper.PiOver2 - torso.Rotation;
 				leftLowerLeg.Friction = 0.0f;
@@ -369,7 +399,7 @@ namespace Badminton
 			{
 				rightHip.TargetAngle = -3 * MathHelper.PiOver4 - torso.Rotation;
 				rightKnee.TargetAngle = -(float)Math.PI - torso.Rotation;
-				rightKnee.MaxImpulse = maxImpulse;
+				rightKnee.MaxImpulse = maxImpulse * health[rightLowerLeg] * health[rightUpperLeg];
 				leftHip.TargetAngle = MathHelper.PiOver2 - torso.Rotation;
 				leftKnee.TargetAngle = -3 * MathHelper.PiOver2 - torso.Rotation;
 				if (JointsAreInPosition(checkThese))
@@ -382,21 +412,16 @@ namespace Badminton
 		/// </summary>
 		public void Jump()
 		{
-			leftHip.MaxImpulse = 100.0f;
-			rightHip.MaxImpulse = 100.0f;
-			leftKnee.MaxImpulse = 100.0f;
-			rightKnee.MaxImpulse = 100.0f;
 			upright.TargetAngle = 0.0f;
 			leftHip.TargetAngle = MathHelper.Pi;
 			leftKnee.TargetAngle = -MathHelper.Pi;
 			rightHip.TargetAngle = -MathHelper.Pi;
 			rightKnee.TargetAngle = -MathHelper.Pi;
-			leftLowerLeg.Friction = 100.0f;
-			rightLowerLeg.Friction = 100.0f;
-
-			if (onGround && Crouching)
+			if (onGround)
 			{
-				torso.ApplyLinearImpulse(Vector2.UnitY * -30);
+				leftLowerLeg.Friction = 100.0f;
+				rightLowerLeg.Friction = 100.0f;
+				torso.ApplyLinearImpulse(Vector2.UnitY * (Crouching ? -25 : -10) * health[torso] * health[leftLowerLeg] * health[rightLowerLeg] * health[head]); // Change joint dependancy
 				Crouching = false;
 			}
 		}
@@ -408,6 +433,7 @@ namespace Badminton
 		{
 			leftLowerLeg.Friction = 0.1f;
 			rightLowerLeg.Friction = 0.1f;
+			upright.TargetAngle = 0.0f;
 			leftHip.TargetAngle = MathHelper.PiOver4;
 			leftKnee.TargetAngle = -7 * MathHelper.PiOver4;
 			rightHip.TargetAngle = -MathHelper.PiOver4;
@@ -431,9 +457,19 @@ namespace Badminton
 
 		#endregion
 
+		#region Updating
+
+		/// <summary>
+		/// Updates some of the stick figures' key stances
+		/// </summary>
 		public void Update()
 		{
+//			List<Body> keys = health.Keys.ToList<Body>();
+//			foreach (Body b in keys)
+//				health[b] = Math.Max(health[b] - 0.001f, 0);
 			UpdateArms();
+			UpdateLimbStrength();
+			UpdateLimbAttachment();
 			if (Crouching)
 				Crouch();
 		}
@@ -443,6 +479,12 @@ namespace Badminton
 		/// </summary>
 		private void UpdateArms()
 		{
+			// Update strength of arms based on health
+			leftElbow.MaxImpulse = maxImpulse * health[leftLowerArm] * health[leftUpperArm];
+			leftShoulder.MaxImpulse = maxImpulse * health[torso] * health[leftUpperArm];
+			rightElbow.MaxImpulse = maxImpulse * health[rightLowerArm] * health[rightUpperArm];
+			rightShoulder.MaxImpulse = maxImpulse * health[torso] * health[rightUpperArm];
+
 			if (!Aiming)
 			{
 				// Rest arms at side
@@ -487,22 +529,156 @@ namespace Badminton
 			}
 		}
 
+		/// <summary>
+		/// Changes the MaxImpulse of each joint based on the health of its limbs
+		/// TODO: More balancing
+		/// </summary>
+		private void UpdateLimbStrength()
+		{
+			upright.MaxImpulse = maxImpulse * health[torso] * health[head];
+			neck.MaxImpulse = maxImpulse * health[head] * health[torso];
+			leftShoulder.MaxImpulse = maxImpulse * health[torso] * health[leftUpperArm] * health[head];
+			leftElbow.MaxImpulse = maxImpulse * health[leftUpperArm] * health[leftLowerArm] * health[torso] * health[head];
+			rightShoulder.MaxImpulse = maxImpulse * health[torso] * health[rightUpperArm] * health[head];
+			rightElbow.MaxImpulse = maxImpulse * health[rightUpperArm] * health[rightLowerArm] * health[torso] * health[head];
+			leftHip.MaxImpulse = maxImpulse * health[torso] * health[leftUpperLeg] * health[head];
+			leftKnee.MaxImpulse = maxImpulse * health[leftUpperLeg] * health[leftLowerLeg] * health[torso] * health[head];
+			rightHip.MaxImpulse = maxImpulse * health[torso] * health[rightUpperLeg] * health[head];
+			rightKnee.MaxImpulse = maxImpulse * health[rightUpperLeg] * health[rightLowerLeg] * health[torso] * health[head];
+		}
+
+		/// <summary>
+		/// Removes major joints connecting limbs with no health
+		/// </summary>
+		private void UpdateLimbAttachment()
+		{
+			if (health[leftUpperArm] <= 0 || health[leftLowerArm] <= 0)
+			{
+				if (health[leftUpperArm] <= 0)
+				{
+					if (world.JointList.Contains(leftShoulder))
+						world.RemoveJoint(leftShoulder);
+					if (world.JointList.Contains(r_leftShoulder))
+						world.RemoveJoint(r_leftShoulder);
+				}
+				if (world.JointList.Contains(leftElbow))
+					world.RemoveJoint(leftElbow);
+				if (world.JointList.Contains(r_leftElbow))
+					world.RemoveJoint(r_leftElbow);
+			}
+
+			if (health[rightUpperArm] <= 0 || health[rightLowerArm] <= 0)
+			{
+				if (health[rightUpperArm] <= 0)
+				{
+					if (world.JointList.Contains(rightShoulder))
+						world.RemoveJoint(rightShoulder);
+					if (world.JointList.Contains(r_rightShoulder))
+						world.RemoveJoint(r_rightShoulder);
+				}
+				if (world.JointList.Contains(rightElbow))
+					world.RemoveJoint(rightElbow);
+				if (world.JointList.Contains(r_rightElbow))
+					world.RemoveJoint(r_rightElbow);
+			}
+
+			if (health[leftUpperLeg] <= 0 || health[leftLowerLeg] <= 0)
+			{
+				if (health[leftUpperLeg] <= 0)
+				{
+					if (world.JointList.Contains(leftHip))
+						world.RemoveJoint(leftHip);
+					if (world.JointList.Contains(r_leftHip))
+						world.RemoveJoint(r_leftHip);
+				}
+				if (world.JointList.Contains(leftKnee))
+					world.RemoveJoint(leftKnee);
+				if (world.JointList.Contains(r_leftKnee))
+					world.RemoveJoint(r_leftKnee);
+			}
+
+			if (health[rightUpperLeg] <= 0 || health[rightLowerLeg] <= 0)
+			{
+				if (health[rightUpperLeg] <= 0)
+				{
+					if (world.JointList.Contains(rightHip))
+						world.RemoveJoint(rightHip);
+					if (world.JointList.Contains(r_rightHip))
+						world.RemoveJoint(r_rightHip);
+				}
+				if (world.JointList.Contains(rightKnee))
+					world.RemoveJoint(rightKnee);
+				if (world.JointList.Contains(r_rightKnee))
+					world.RemoveJoint(r_rightKnee);
+			}
+
+			if (health[torso] <= 0)
+			{
+				if (world.JointList.Contains(upright))
+					world.RemoveJoint(upright);
+			}
+
+			// Change to just kill all limbs
+			if (health[head] <= 0)
+			{
+				if (world.JointList.Contains(neck))
+					world.RemoveJoint(neck);
+				if (world.JointList.Contains(r_neck))
+					world.RemoveJoint(r_neck);
+			}
+		}
+
+		#endregion
+
+		#region Drawing
+
+		/// <summary>
+		/// Draws the stick figure
+		/// </summary>
+		/// <param name="sb">The SpriteBatch used to draw the stick figure</param>
 		public void Draw(SpriteBatch sb)
 		{
-			sb.Draw(MainGame.tex_torso, torso.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, torso.Rotation, new Vector2(5f, 20f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, leftUpperArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, leftUpperArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, rightUpperArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, rightUpperArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, leftLowerArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, leftLowerArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, rightLowerArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, rightLowerArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, leftUpperLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, leftUpperLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, rightUpperLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, rightUpperLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, leftLowerLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, leftLowerLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_limb, rightLowerLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, rightLowerLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
-			sb.Draw(MainGame.tex_head, head.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, head.Rotation, new Vector2(12.5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			Color deathColor = Color.Black;
+			Color c = Blend(color, deathColor, health[torso]);
+			sb.Draw(MainGame.tex_torso, torso.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, torso.Rotation, new Vector2(5f, 20f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			c = Blend(color, deathColor, health[leftUpperArm]);
+			sb.Draw(MainGame.tex_limb, leftUpperArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, leftUpperArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			c = Blend(color, deathColor, health[rightUpperArm]);
+			sb.Draw(MainGame.tex_limb, rightUpperArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, rightUpperArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			c = Blend(color, deathColor, health[leftLowerArm]);
+			sb.Draw(MainGame.tex_limb, leftLowerArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, leftLowerArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			c = Blend(color, deathColor, health[rightLowerArm]);
+			sb.Draw(MainGame.tex_limb, rightLowerArm.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, rightLowerArm.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			c = Blend(color, deathColor, health[leftUpperLeg]);
+			sb.Draw(MainGame.tex_limb, leftUpperLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, leftUpperLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			c = Blend(color, deathColor, health[rightUpperLeg]);
+			sb.Draw(MainGame.tex_limb, rightUpperLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, rightUpperLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			c = Blend(color, deathColor, health[leftLowerLeg]);
+			sb.Draw(MainGame.tex_limb, leftLowerLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, leftLowerLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			c = Blend(color, deathColor, health[rightLowerLeg]);
+			sb.Draw(MainGame.tex_limb, rightLowerLeg.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, rightLowerLeg.Rotation, new Vector2(5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
+			c = Blend(color, deathColor, health[head]);
+			sb.Draw(MainGame.tex_head, head.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, head.Rotation, new Vector2(12.5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
 
 			// Debug
 //			sb.DrawString(MainGame.fnt_basicFont, "x", LeftHandPosition * MainGame.METER_TO_PIXEL, Color.Red);
 //			sb.DrawString(MainGame.fnt_basicFont, "x", RightHandPosition * MainGame.METER_TO_PIXEL, Color.Red);
 		}
+
+		/// <summary>Blends the specified colors together.</summary>
+		/// <param name="color">Color to blend onto the background color.</param>
+		/// <param name="backColor">Color to blend the other color onto.</param>
+		/// <param name="amount">How much of <paramref name="color"/> to keep,
+		/// “on top of” <paramref name="backColor"/>.</param>
+		/// <returns>The blended colors.</returns>
+		private Color Blend(Color c1, Color c2, float amount)
+		{
+			byte r = (byte)((c1.R * amount) + c2.R * (1 - amount));
+			byte g = (byte)((c1.G * amount) + c2.G * (1 - amount));
+			byte b = (byte)((c1.B * amount) + c2.B * (1 - amount));
+			return Color.FromNonPremultiplied(r, g, b, c1.A);
+		}
+
+		#endregion
 	}
 }
