@@ -78,11 +78,21 @@ namespace Badminton.Screens
 			}
 			// -----------------------------------------*/
 
-			testFigure.Aim(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);
-			if (Keyboard.GetState().IsKeyDown(Keys.Right))
+			if (Mouse.GetState().RightButton == ButtonState.Pressed)
+				testFigure.Aim(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);
+
+			if (Keyboard.GetState().IsKeyDown(Keys.Space))
+				testFigure.Jump();
+			else if (Keyboard.GetState().IsKeyDown(Keys.D))
 				testFigure.WalkRight();
+			else if (Keyboard.GetState().IsKeyDown(Keys.A))
+				testFigure.WalkLeft();
 			else
 				testFigure.Stand();
+
+			if (Keyboard.GetState().IsKeyDown(Keys.LeftControl) && !Keyboard.GetState().IsKeyDown(Keys.Space))
+				testFigure.Squat();
+
 			testFigure.Update();
 
 			// These two lines stay here, even after we delete testing stuff
