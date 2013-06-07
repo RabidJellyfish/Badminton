@@ -36,14 +36,24 @@ namespace Badminton
 		{
 			get
 			{
-				return leftLowerArm.Position + new Vector2((float)-Math.Cos(leftLowerArm.Rotation), (float)-Math.Sin(leftLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+				if (health[leftLowerArm] > 0)
+					return leftLowerArm.Position + new Vector2((float)-Math.Cos(leftLowerArm.Rotation), (float)-Math.Sin(leftLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+				else if (health[leftUpperArm] > 0)
+					return leftUpperArm.Position + new Vector2((float)Math.Sin(rightUpperArm.Rotation), -(float)Math.Cos(rightUpperArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+				else
+					return -Vector2.One;
 			}
 		}
 		public Vector2 RightHandPosition
 		{
 			get
 			{
-				return rightLowerArm.Position + new Vector2((float)-Math.Cos(rightLowerArm.Rotation), (float)-Math.Sin(rightLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+				if (health[rightLowerArm] > 0)
+					return rightLowerArm.Position + new Vector2((float)-Math.Cos(rightLowerArm.Rotation), (float)-Math.Sin(rightLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+				else if (health[rightUpperArm] > 0)
+					return rightUpperArm.Position + new Vector2((float)Math.Sin(rightUpperArm.Rotation), -(float)Math.Cos(rightUpperArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+				else
+					return -Vector2.One;
 			}
 		}
 		
@@ -52,11 +62,12 @@ namespace Badminton
 		public bool Crouching { get; set; }
 
 		// Other
-		private Vector2 aimVector;
-		private int walkStage = 0;
-		private bool onGround;
 		private Color color;
-
+		private Vector2 aimVector;
+		private int walkStage;
+		private bool onGround;
+		private int groundCheck;
+		
 		public StickFigure(World world, Vector2 position, Category collisionCat, Color c)
 		{
 			this.world = world;
@@ -65,16 +76,28 @@ namespace Badminton
 			Aiming = false;
 			health = new Dictionary<Body, float>();
 			this.color = c;
+			walkStage = 0;
+			groundCheck = 0;
 
 			GenerateBody(world, position, collisionCat);
 			ConnectBody(world);
 
 			onGround = false;
-			// Do this for ALL the limbs
-			leftLowerLeg.OnCollision += new OnCollisionEventHandler(OnCollision);
-			rightLowerLeg.OnCollision += new OnCollisionEventHandler(OnCollision);
-			leftLowerLeg.OnSeparation += new OnSeparationEventHandler(OnSeparation);
-			rightLowerLeg.OnSeparation += new OnSeparationEventHandler(OnSeparation);
+			leftLowerLeg.OnCollision += new OnCollisionEventHandler(OnGroundCollision);
+			rightLowerLeg.OnCollision += new OnCollisionEventHandler(OnGroundCollision);
+			leftLowerLeg.OnSeparation += new OnSeparationEventHandler(OnGroundSeparation);
+			rightLowerLeg.OnSeparation += new OnSeparationEventHandler(OnGroundSeparation);
+
+			head.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			torso.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			leftUpperArm.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			leftLowerArm.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			rightUpperArm.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			rightLowerArm.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			leftUpperLeg.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			leftLowerLeg.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			rightUpperLeg.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			rightLowerLeg.OnCollision += new OnCollisionEventHandler(DamageCollision);
 
 			Stand();
 		}
@@ -106,6 +129,7 @@ namespace Badminton
 			head.BodyType = BodyType.Dynamic;
 			head.CollisionCategories = collisionCat;
 			head.CollidesWith = Category.All & ~collisionCat;
+			head.Restitution = 0.2f;
 			health.Add(head, 1.0f);
 
 			leftUpperArm = BodyFactory.CreateCapsule(world, 25 * MainGame.PIXEL_TO_METER, 5 * MainGame.PIXEL_TO_METER, 0.1f);
@@ -238,27 +262,35 @@ namespace Badminton
 
 		#region Collision handlers
 
-		/// <summary>
-		/// Event handler for collisions between two fixtures
-		/// </summary>
-		/// <param name="fixtureA">Object 1</param>
-		/// <param name="fixtureB">Object 2</param>
-		/// <param name="contact">The collision</param>
-		/// <returns></returns>
-		bool OnCollision(Fixture fixtureA, Fixture fixtureB, Contact contact)
+		bool OnGroundCollision(Fixture fixtureA, Fixture fixtureB, Contact contact)
 		{
-			onGround = true;
+			Vector2 normal = contact.Manifold.LocalNormal;
+			if (normal.X == 0 || normal.Y / normal.X > 1)
+				onGround = true;
+			return contact.IsTouching();
+		}
+		void OnGroundSeparation(Fixture fixtureA, Fixture fixtureB)
+		{
+			onGround = false;
+		}
+
+		bool DamageCollision(Fixture fixtureA, Fixture fixtureB, Contact contact)
+		{
+			Vector2 colNormal = contact.Manifold.LocalNormal;
+			Vector2 aMomentum = fixtureA.Body.LinearVelocity;
+			Vector2 bMomentum = fixtureB.Body.LinearVelocity * fixtureB.Body.Mass;
+
+			float damage = Math.Abs(Vector2.Dot(aMomentum, colNormal) - Vector2.Dot(bMomentum, colNormal));
+			damage = (damage < 15f ? 0 : damage); // Min damage = 15
+
+			health[fixtureA.Body] -= damage / 200f; // Subject to change
+
 			return contact.IsTouching();
 		}
 
-		/// <summary>
-		/// Event handler for separation of a collision
-		/// </summary>
-		/// <param name="fixtureA">Object 1</param>
-		/// <param name="fixtureB">Object 2</param>
-		void OnSeparation(Fixture fixtureA, Fixture fixtureB)
+		public void ApplyForce(Vector2 v)
 		{
-			onGround = false;
+			torso.ApplyForce(v * 10);
 		}
 
 		#endregion
@@ -303,8 +335,8 @@ namespace Badminton
 		public void WalkRight()
 		{
 			upright.TargetAngle = -0.1f;
-			if (torso.LinearVelocity.X < (onGround ? 4 : 3) && !(Crouching && onGround))
-				torso.ApplyForce(new Vector2(150, 0) * maxImpulse * health[torso] * health[head]); // Change limb dependency
+			if (torso.LinearVelocity.X < (onGround ? 4 : 3) * GetTotalLegStrength() && !(Crouching && onGround))
+				torso.ApplyForce(new Vector2(150, 0) * maxImpulse * health[torso] * health[head] * GetTotalLegStrength()); // Change limb dependency
 			AngleJoint[] checkThese = new AngleJoint[] { leftHip, rightHip };
 			if (walkStage == 0)
 			{
@@ -358,8 +390,8 @@ namespace Badminton
 		public void WalkLeft()
 		{
 			upright.TargetAngle = 0.1f;
-			if (torso.LinearVelocity.X > (onGround ? -4 : -3) && !(Crouching && onGround))
-				torso.ApplyForce(new Vector2(-150, 0) * maxImpulse * health[torso] * health[head]); // Change limb dependency
+			if (torso.LinearVelocity.X > (onGround ? -4 : -3) * GetTotalLegStrength() && !(Crouching && onGround))
+				torso.ApplyForce(new Vector2(-150, 0) * maxImpulse * health[torso] * health[head] * GetTotalLegStrength()); // Change limb dependency
 			AngleJoint[] checkThese = new AngleJoint[] { leftHip, rightHip };
 			if (walkStage == 0)
 			{
@@ -421,9 +453,9 @@ namespace Badminton
 			{
 				leftLowerLeg.Friction = 100.0f;
 				rightLowerLeg.Friction = 100.0f;
-				torso.ApplyLinearImpulse(Vector2.UnitY * (Crouching ? -25 : -10) * health[torso] * health[leftLowerLeg] * health[rightLowerLeg] * health[head]); // Change joint dependancy
-				Crouching = false;
+				torso.ApplyLinearImpulse(Vector2.UnitY * (Crouching ? -25 : -10) * health[torso] * GetTotalLegStrength() * health[head]); // Change joint dependancy
 			}
+			Crouching = false;
 		}
 
 		/// <summary>
@@ -464,14 +496,18 @@ namespace Badminton
 		/// </summary>
 		public void Update()
 		{
-//			List<Body> keys = health.Keys.ToList<Body>();
-//			foreach (Body b in keys)
-//				health[b] = Math.Max(health[b] - 0.001f, 0);
 			UpdateArms();
 			UpdateLimbStrength();
 			UpdateLimbAttachment();
 			if (Crouching)
 				Crouch();
+
+			if (Math.Abs(torso.LinearVelocity.Y) < 0.01f)
+				groundCheck++;
+			else
+				groundCheck = 0;
+			if (groundCheck >= 5)
+				onGround = true;
 		}
 
 		/// <summary>
@@ -535,12 +571,15 @@ namespace Badminton
 		/// </summary>
 		private void UpdateLimbStrength()
 		{
+			List<Body> bodies = health.Keys.ToList();
+			foreach (Body b in bodies)
+				health[b] = Math.Max(health[b], 0f);
 			upright.MaxImpulse = maxImpulse * health[torso] * health[head];
 			neck.MaxImpulse = maxImpulse * health[head] * health[torso];
-			leftShoulder.MaxImpulse = maxImpulse * health[torso] * health[leftUpperArm] * health[head];
-			leftElbow.MaxImpulse = maxImpulse * health[leftUpperArm] * health[leftLowerArm] * health[torso] * health[head];
-			rightShoulder.MaxImpulse = maxImpulse * health[torso] * health[rightUpperArm] * health[head];
-			rightElbow.MaxImpulse = maxImpulse * health[rightUpperArm] * health[rightLowerArm] * health[torso] * health[head];
+			leftShoulder.MaxImpulse = maxImpulse * health[torso] * health[leftUpperArm] * health[head] * 0.004f;
+			leftElbow.MaxImpulse = maxImpulse * health[leftUpperArm] * health[leftLowerArm] * health[torso] * health[head] * 0.004f;
+			rightShoulder.MaxImpulse = maxImpulse * health[torso] * health[rightUpperArm] * health[head] * 0.004f;
+			rightElbow.MaxImpulse = maxImpulse * health[rightUpperArm] * health[rightLowerArm] * health[torso] * health[head] * 0.004f;
 			leftHip.MaxImpulse = maxImpulse * health[torso] * health[leftUpperLeg] * health[head];
 			leftKnee.MaxImpulse = maxImpulse * health[leftUpperLeg] * health[leftLowerLeg] * health[torso] * health[head];
 			rightHip.MaxImpulse = maxImpulse * health[torso] * health[rightUpperLeg] * health[head];
@@ -556,11 +595,14 @@ namespace Badminton
 			{
 				if (health[leftUpperArm] <= 0)
 				{
+					health[leftLowerArm] = 0;
+					leftUpperArm.Friction = 3.0f;
 					if (world.JointList.Contains(leftShoulder))
 						world.RemoveJoint(leftShoulder);
 					if (world.JointList.Contains(r_leftShoulder))
 						world.RemoveJoint(r_leftShoulder);
 				}
+				leftLowerArm.Friction = 3.0f;
 				if (world.JointList.Contains(leftElbow))
 					world.RemoveJoint(leftElbow);
 				if (world.JointList.Contains(r_leftElbow))
@@ -571,11 +613,14 @@ namespace Badminton
 			{
 				if (health[rightUpperArm] <= 0)
 				{
+					health[rightLowerArm] = 0;
+					rightUpperArm.Friction = 3.0f;
 					if (world.JointList.Contains(rightShoulder))
 						world.RemoveJoint(rightShoulder);
 					if (world.JointList.Contains(r_rightShoulder))
 						world.RemoveJoint(r_rightShoulder);
 				}
+				rightLowerArm.Friction = 3.0f;
 				if (world.JointList.Contains(rightElbow))
 					world.RemoveJoint(rightElbow);
 				if (world.JointList.Contains(r_rightElbow))
@@ -586,11 +631,14 @@ namespace Badminton
 			{
 				if (health[leftUpperLeg] <= 0)
 				{
+					health[leftLowerLeg] = 0;
+					leftUpperLeg.Friction = 3.0f;
 					if (world.JointList.Contains(leftHip))
 						world.RemoveJoint(leftHip);
 					if (world.JointList.Contains(r_leftHip))
 						world.RemoveJoint(r_leftHip);
 				}
+				leftLowerLeg.Friction = 3.0f;
 				if (world.JointList.Contains(leftKnee))
 					world.RemoveJoint(leftKnee);
 				if (world.JointList.Contains(r_leftKnee))
@@ -601,11 +649,14 @@ namespace Badminton
 			{
 				if (health[rightUpperLeg] <= 0)
 				{
+					health[rightLowerLeg] = 0;
+					rightUpperLeg.Friction = 3.0f;
 					if (world.JointList.Contains(rightHip))
 						world.RemoveJoint(rightHip);
 					if (world.JointList.Contains(r_rightHip))
 						world.RemoveJoint(r_rightHip);
 				}
+				rightLowerLeg.Friction = 3.0f;
 				if (world.JointList.Contains(rightKnee))
 					world.RemoveJoint(rightKnee);
 				if (world.JointList.Contains(r_rightKnee))
@@ -614,6 +665,7 @@ namespace Badminton
 
 			if (health[torso] <= 0)
 			{
+				torso.Friction = 3.0f;
 				if (world.JointList.Contains(upright))
 					world.RemoveJoint(upright);
 			}
@@ -621,11 +673,21 @@ namespace Badminton
 			// Change to just kill all limbs
 			if (health[head] <= 0)
 			{
+				head.Friction = 3.0f;
 				if (world.JointList.Contains(neck))
 					world.RemoveJoint(neck);
 				if (world.JointList.Contains(r_neck))
 					world.RemoveJoint(r_neck);
 			}
+		}
+
+		/// <summary>
+		/// Gives the combined health of both legs
+		/// </summary>
+		/// <returns>A combination of the health of each leg section</returns>
+		private float GetTotalLegStrength()
+		{
+			return ((health[leftUpperLeg] + 2 * health[leftLowerLeg]) / 6 + (health[rightUpperLeg] + 2 * health[rightLowerLeg]) / 6);
 		}
 
 		#endregion
@@ -661,8 +723,9 @@ namespace Badminton
 			sb.Draw(MainGame.tex_head, head.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, c, head.Rotation, new Vector2(12.5f, 12.5f), MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
 
 			// Debug
-//			sb.DrawString(MainGame.fnt_basicFont, "x", LeftHandPosition * MainGame.METER_TO_PIXEL, Color.Red);
-//			sb.DrawString(MainGame.fnt_basicFont, "x", RightHandPosition * MainGame.METER_TO_PIXEL, Color.Red);
+//			sb.DrawString(MainGame.fnt_basicFont, "L", LeftHandPosition * MainGame.METER_TO_PIXEL, Color.Blue);
+//			sb.DrawString(MainGame.fnt_basicFont, "R", RightHandPosition * MainGame.METER_TO_PIXEL, Color.Lime);
+//			sb.DrawString(MainGame.fnt_basicFont, groundCheck.ToString(), Vector2.Zero, Color.White);
 		}
 
 		/// <summary>Blends the specified colors together.</summary>

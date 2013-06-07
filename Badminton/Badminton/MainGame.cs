@@ -126,7 +126,7 @@ namespace Badminton
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw(GameTime gameTime)
 		{
-			GraphicsDevice.Clear(Color.CornflowerBlue);
+			GraphicsDevice.Clear(Color.Multiply(Color.DarkGray, 0.7f));
 
 			spriteBatch.Begin(SpriteSortMode.Texture, BlendState.NonPremultiplied);
 			currentScreen.Draw(spriteBatch);

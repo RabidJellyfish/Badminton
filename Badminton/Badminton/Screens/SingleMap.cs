@@ -54,6 +54,8 @@ namespace Badminton.Screens
 		{
 			if (Mouse.GetState().RightButton == ButtonState.Pressed)
 				testFigure.Aim(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);
+			if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+				testFigure.ApplyForce(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER - testFigure.Position);
 
 			bool stand = true;
 
