@@ -35,7 +35,7 @@ namespace Badminton
 		Screens.GameScreen currentScreen;
 
 		public static SpriteFont fnt_basicFont;
-		public static Texture2D tex_box, tex_bullet;
+		public static Texture2D tex_box, tex_bullet, tex_gun;
 		public static Texture2D tex_head, tex_torso, tex_limb;
 
 		private bool escapePressed;
@@ -43,8 +43,8 @@ namespace Badminton
 		public MainGame()
 		{
 			graphics = new GraphicsDeviceManager(this);
-			graphics.PreferredBackBufferWidth = 1920;
-			graphics.PreferredBackBufferHeight = 1080;
+			graphics.PreferredBackBufferWidth = 960;
+			graphics.PreferredBackBufferHeight = 540;
 			RESOLUTION_SCALE.X = graphics.PreferredBackBufferWidth / 1920f;
 			RESOLUTION_SCALE.Y = graphics.PreferredBackBufferHeight / 1080f;
 			graphics.IsFullScreen = false;
@@ -78,7 +78,8 @@ namespace Badminton
 			fnt_basicFont = Content.Load<SpriteFont>("fonts/basicFont");
 
 			tex_box = Content.Load<Texture2D>("textures/box");
-			tex_bullet = Content.Load<Texture2D>("textures/boolit");
+			tex_bullet = Content.Load<Texture2D>("textures/weapons/boolit");
+			tex_gun = Content.Load<Texture2D>("textures/weapons/temp gun");
 			tex_head = Content.Load<Texture2D>("textures/stick figure/head");
 			tex_limb = Content.Load<Texture2D>("textures/stick figure/limb");
 			tex_torso = Content.Load<Texture2D>("textures/stick figure/torso");
@@ -102,10 +103,10 @@ namespace Badminton
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Update(GameTime gameTime)
 		{
-			if (Keyboard.GetState().IsKeyDown(Keys.Z))
-				this.TargetElapsedTime = TimeSpan.FromSeconds(0.3f);
-			else
-				this.TargetElapsedTime = TimeSpan.FromSeconds(0.016f);
+//			if (Keyboard.GetState().IsKeyDown(Keys.Z))
+//				this.TargetElapsedTime = TimeSpan.FromSeconds(0.3f);
+//			else
+//				this.TargetElapsedTime = TimeSpan.FromSeconds(0.016f);
 
 			// Allows the game to exit
 			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))

@@ -9,6 +9,8 @@ Add StickFigure subclasses
 		 - need weapon anglejoint and r_weapon revolute joint
 	
 	StickFigure methods TODO
+		Prone()
+		PickUpWeapon(Weapon w)
 		Melee(Vector2 dir) // Swings weapon in direction of vector
 		FireWeapon(Vector2 dir) // Shoots weapon, if possible
 		ThrowWeapon(Vector2 dir) // Throws weapon in the direction of dir
@@ -20,12 +22,17 @@ Weapon
 	Weapon instance data
 		float mass
 		int totalAmmo
+		int totalCapacity
 		int clipAmmo
+		int clipCapacity
 		List<Bullet> bullets
 		int fireRate
 		int reloadSpeed
+		WeaponType type
 
 	Weapon methods
 		Update()
-		Fire(Vector2 dir)
+		Aim(Vector2 dir)
+		Fire()
+		Reload()
 		Draw()

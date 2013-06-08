@@ -118,6 +118,8 @@
     <Compile Include="Stick Figures\LocalPlayer.cs" />
     <Compile Include="Stick Figures\StickFigure.cs" />
     <Compile Include="Wall.cs" />
+    <Compile Include="Weapons\TestBullet.cs" />
+    <Compile Include="Weapons\Weapon.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />

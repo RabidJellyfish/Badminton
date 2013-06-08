@@ -5,7 +5,6 @@ using System.Text;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 using FarseerPhysics;
 using FarseerPhysics.Common;
@@ -16,46 +15,55 @@ using FarseerPhysics.Factories;
 
 namespace Badminton.Weapons
 {
-    class Bullet
+    abstract class Bullet
     {
         protected Body bullet;
 
-        //The position of the bullet
+		/// <summary>
+		/// The center of the bullet
+		/// </summary>
 		public Vector2 Position { get { return bullet.Position; } }
+
+		/// <summary>
+		/// The bullet's linear velocity
+		/// </summary>
 		public Vector2 Velocity { get { return bullet.LinearVelocity; } }
+
+		/// <summary>
+		/// The amount of damage the bullet causes
+		/// </summary>
 		public float Damage { get; set; }
+
+		/// <summary>
+		/// Whether or not the bullet should be destroyed this step
+		/// </summary>
 		public bool Remove { get { return bullet.UserData == null; } }
 
-        private World world;
+        protected World world;
 		private Category collisionCat;
 
-		//Makes a bullet
-        public Bullet(World world, Category collisionCat, Vector2 position, Vector2 velocity, float mass)
+		/// <summary>
+		/// Creates a bullet
+		/// </summary>
+		/// <param name="world">The world to add the body to</param>
+		/// <param name="collisionCat">The collision category of the bullet</param>
+		/// <param name="position">Where the bullet is created</param>
+		/// <param name="velocity">The bullet's initial velocity</param>
+        public Bullet(World world, Category collisionCat, Vector2 position, Vector2 velocity)
         {
             this.world = world;
 			this.collisionCat = collisionCat;
-			this.Damage = 0.5f;
 
-			MakeBullet(position, velocity, mass);
-        }
-
-        //Actually, this makes the bullet
-        private void MakeBullet(Vector2 position, Vector2 velocity, float mass)
-        {
-            bullet = BodyFactory.CreateRectangle(world, 11.0f * MainGame.PIXEL_TO_METER, 3.2f * MainGame.PIXEL_TO_METER, 10.0f);
-            bullet.BodyType = BodyType.Dynamic;
-            bullet.Position = position;
+			bullet = BodyFactory.CreateRectangle(world, 11.0f * MainGame.PIXEL_TO_METER, 3.2f * MainGame.PIXEL_TO_METER, 1f);
+			bullet.BodyType = BodyType.Dynamic;
+			bullet.Position = position;
 			bullet.CollisionCategories = this.collisionCat;
 			bullet.CollidesWith = Category.All & ~collisionCat;
-			bullet.FixedRotation = true;
 			bullet.IsBullet = true;
 			bullet.UserData = this;
-            bullet.LinearVelocity = velocity;
+			bullet.LinearVelocity = velocity;
 			bullet.Rotation = (float)Math.Atan2(bullet.LinearVelocity.Y, bullet.LinearVelocity.X) + MathHelper.PiOver2;
 			bullet.OnSeparation += new OnSeparationEventHandler(OnSeparation);
-
-			bullet.Restitution = 0.5f;
-			bullet.Mass = mass;
 		}
 
 		private void OnSeparation(Fixture f1, Fixture f2)
@@ -63,26 +71,19 @@ namespace Badminton.Weapons
 			bullet.UserData = null;
 		}
 
-		public void Update()
+		/// <summary>
+		/// Called once every step. Updates the bullet.
+		/// </summary>
+		public virtual void Update()
 		{
 			if (bullet.UserData == null && world.BodyList.Contains(bullet))
-			{
 				world.RemoveBody(bullet);
-				return;
-			}
-			if (!world.BodyList.Contains(bullet))
-				return;
-
-			//Counteracts gravity
-			bullet.ApplyForce(new Vector2(0, -0.05f * bullet.Mass));
-			bullet.Rotation = (float)Math.Atan2(bullet.LinearVelocity.Y, bullet.LinearVelocity.X) + MathHelper.PiOver2;
 		}
 
-        public void Draw(SpriteBatch sb)
-        {
-			// Change origin to center of texture
-			if (world.BodyList.Contains(bullet) && bullet.UserData != null)
-				sb.Draw(MainGame.tex_bullet, bullet.Position * MainGame.METER_TO_PIXEL, null, Color.White, bullet.Rotation, new Vector2(0.0f, 0.0f), 0.1f, SpriteEffects.None, 0.0f);   
-        }
+		/// <summary>
+		/// Draws the bullet
+		/// </summary>
+		/// <param name="sb">The SpriteBatch used to draw the bullet</param>
+		public abstract void Draw(SpriteBatch sb);
     }
 }

@@ -33,7 +33,14 @@ namespace Badminton.Stick_Figures
 		private float maxImpulse;
 
 		// Position properties
+		/// <summary>
+		/// The torso's position
+		/// </summary>
 		public Vector2 Position { get { return torso.Position; } }
+
+		/// <summary>
+		/// The left hand's position
+		/// </summary>
 		public Vector2 LeftHandPosition
 		{
 			get
@@ -46,6 +53,10 @@ namespace Badminton.Stick_Figures
 					return -Vector2.One;
 			}
 		}
+		
+		/// <summary>
+		/// The right hand's position
+		/// </summary>
 		public Vector2 RightHandPosition
 		{
 			get
@@ -282,11 +293,6 @@ namespace Badminton.Stick_Figures
 				health[fixtureA.Body] -= ((Bullet)fixtureB.Body.UserData).Damage;
 
 			return true;
-		}
-
-		public void ApplyForce(Vector2 v)
-		{
-			torso.ApplyForce(v * 10);
 		}
 
 		#endregion
@@ -687,6 +693,11 @@ namespace Badminton.Stick_Figures
 		}
 
 		#endregion
+
+		public void ApplyForce(Vector2 v)
+		{
+			torso.ApplyForce(v * 10);
+		}
 
 		#region Drawing
 

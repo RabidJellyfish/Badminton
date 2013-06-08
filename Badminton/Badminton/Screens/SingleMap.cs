@@ -64,18 +64,18 @@ namespace Badminton.Screens
 		private int i = 0;
 		public GameScreen Update(GameTime gameTime)
 		{
-			//////////////////////////////////////////////
-			// Put in Weapon class whenever that exists //
-			//////////////////////////////////////////////
+			///////////////////////////////////////
+			// Put in Weapon/LocalPlayer classes //
+			///////////////////////////////////////
 			if ((Mouse.GetState().LeftButton == ButtonState.Pressed))
 			{
 				//i is used for fire rate. The bullet will fire once every 60/5 seconds in this case
 				if (i % 60 == 0)
 				{
-					Vector2 velocity = new Vector2(Mouse.GetState().X * MainGame.PIXEL_TO_METER, Mouse.GetState().Y * MainGame.PIXEL_TO_METER) - testFigure.RightHandPosition;
+					Vector2 velocity = new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER - testFigure.RightHandPosition * MainGame.RESOLUTION_SCALE;
 					velocity.Normalize();
 					velocity *= 75f;
-					Bullet g = new Bullet(world, Category.Cat1, testFigure.RightHandPosition, velocity, 0.1f);
+					Bullet g = new TestBullet(world, Category.Cat1, testFigure.RightHandPosition, velocity);
 					bulletList.Add(g);
 					if (bulletList.Count > 50)
 						bulletList.RemoveAt(0);
@@ -84,10 +84,6 @@ namespace Badminton.Screens
 			}
 			else
 				i = 0;
-			//////////////////////////////////////////////
-
-			testFigure.Update();
-			dummyFigure.Update();
 
 			List<Bullet> toRemove = new List<Bullet>();
 			foreach (Bullet b in bulletList)
@@ -96,9 +92,13 @@ namespace Badminton.Screens
 				if (b.Remove)
 					toRemove.Add(b);
 			}
+			/////////////////////////////////////////
+
+			testFigure.Update();
+			dummyFigure.Update();
 
 			// These two lines stay here, even after we delete testing stuff
-			world.Step(0.016f); //(float)gameTime.ElapsedGameTime.TotalSeconds);
+			world.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
 			return this;
 		}
 

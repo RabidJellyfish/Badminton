@@ -47,13 +47,22 @@
       <Time>2013-06-06T16:52:12.3397419-04:00</Time>
     </Item>
     <Item>
-      <Source>textures\boolit.png</Source>
-      <Name>textures\boolit</Name>
+      <Source>textures\weapons\boolit.png</Source>
+      <Name>textures\weapons\boolit</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\boolit.xnb</Output>
+      <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\weapons\boolit.xnb</Output>
       <Time>2013-06-07T13:50:17.0179617-04:00</Time>
+    </Item>
+    <Item>
+      <Source>textures\weapons\temp gun.png</Source>
+      <Name>textures\weapons\temp gun</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\weapons\temp gun.xnb</Output>
+      <Time>2013-06-08T01:38:05.7510192-04:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
