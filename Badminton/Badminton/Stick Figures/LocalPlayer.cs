@@ -25,8 +25,23 @@ namespace Badminton.Stick_Figures
 
 		public override void Update()
 		{
+			if (Keyboard.GetState().IsKeyDown(Keys.Q) && touchingWeapons.Count > 0)
+				PickUpWeapon(touchingWeapons[0]);
+
 			if (Mouse.GetState().RightButton == ButtonState.Pressed)
 				Aim(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);
+
+			if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+				FireWeapon();
+
+			if (Keyboard.GetState().IsKeyDown(Keys.R))
+				ReloadWeapon();
+
+			if (Keyboard.GetState().IsKeyDown(Keys.E))
+				Melee();
+
+			if (Keyboard.GetState().IsKeyDown(Keys.F))
+				ThrowWeapon(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);
 
 			bool stand = true;
 
@@ -64,6 +79,12 @@ namespace Badminton.Stick_Figures
 			base.Update();
 		}
 
+		public override void Draw(SpriteBatch sb)
+		{
+			base.Draw(sb);
 
+			if (this.weapon != null)
+				this.weapon.DrawHUD(sb);
+		}
 	}
 }

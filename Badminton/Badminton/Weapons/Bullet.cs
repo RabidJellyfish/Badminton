@@ -39,6 +39,11 @@ namespace Badminton.Weapons
 		/// </summary>
 		public bool Remove { get { return bullet.UserData == null; } }
 
+		/// <summary>
+		/// The mass of the bullet
+		/// </summary>
+		public float Mass { get { return bullet.Mass; } }
+
         protected World world;
 		private Category collisionCat;
 

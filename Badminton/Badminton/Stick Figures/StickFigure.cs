@@ -22,10 +22,12 @@ namespace Badminton.Stick_Figures
 		private World world;
 
 		// Ragdoll
-		public Body torso, head, leftUpperArm, rightUpperArm, leftLowerArm, rightLowerArm, leftUpperLeg, rightUpperLeg, leftLowerLeg, rightLowerLeg;
+		private Body torso, head, leftUpperArm, rightUpperArm, leftLowerArm, rightLowerArm, leftUpperLeg, rightUpperLeg, leftLowerLeg, rightLowerLeg;
 		private Body gyro;
 		private AngleJoint neck, leftShoulder, rightShoulder, leftElbow, rightElbow, leftHip, rightHip, leftKnee, rightKnee;
+		private AngleJoint weaponJoint;
 		private RevoluteJoint r_neck, r_leftShoulder, r_rightShoulder, r_leftElbow, r_rightElbow, r_leftHip, r_rightHip, r_leftKnee, r_rightKnee;
+		private RevoluteJoint r_weaponJoint;
 		private AngleJoint upright;
 
 		// Limb control
@@ -48,7 +50,7 @@ namespace Badminton.Stick_Figures
 				if (health[leftLowerArm] > 0)
 					return leftLowerArm.Position + new Vector2((float)-Math.Cos(leftLowerArm.Rotation), (float)-Math.Sin(leftLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
 				else if (health[leftUpperArm] > 0)
-					return leftUpperArm.Position + new Vector2((float)Math.Sin(rightUpperArm.Rotation), -(float)Math.Cos(rightUpperArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+					return leftUpperArm.Position + new Vector2((float)Math.Sin(leftUpperArm.Rotation), -(float)Math.Cos(leftUpperArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
 				else
 					return -Vector2.One;
 			}
@@ -76,10 +78,13 @@ namespace Badminton.Stick_Figures
 
 		// Other
 		private Color color;
+		protected Weapon weapon;
 		private Vector2 aimVector;
 		private int walkStage;
 		private bool onGround;
 		private int groundCheck;
+		private Category collisionCat;
+		protected List<Weapon> touchingWeapons;
 		
 		public StickFigure(World world, Vector2 position, Category collisionCat, Color c)
 		{
@@ -91,6 +96,8 @@ namespace Badminton.Stick_Figures
 			this.color = c;
 			walkStage = 0;
 			groundCheck = 0;
+			touchingWeapons = new List<Weapon>();
+			this.collisionCat = collisionCat;
 
 			GenerateBody(world, position, collisionCat);
 			ConnectBody(world);
@@ -101,16 +108,16 @@ namespace Badminton.Stick_Figures
 			leftLowerLeg.OnSeparation += new OnSeparationEventHandler(OnGroundSeparation);
 			rightLowerLeg.OnSeparation += new OnSeparationEventHandler(OnGroundSeparation);
 
-			head.OnCollision += new OnCollisionEventHandler(DamageCollision);
-			torso.OnCollision += new OnCollisionEventHandler(DamageCollision);
-			leftUpperArm.OnCollision += new OnCollisionEventHandler(DamageCollision);
-			leftLowerArm.OnCollision += new OnCollisionEventHandler(DamageCollision);
-			rightUpperArm.OnCollision += new OnCollisionEventHandler(DamageCollision);
-			rightLowerArm.OnCollision += new OnCollisionEventHandler(DamageCollision);
-			leftUpperLeg.OnCollision += new OnCollisionEventHandler(DamageCollision);
-			leftLowerLeg.OnCollision += new OnCollisionEventHandler(DamageCollision);
-			rightUpperLeg.OnCollision += new OnCollisionEventHandler(DamageCollision);
-			rightLowerLeg.OnCollision += new OnCollisionEventHandler(DamageCollision);
+			head.OnCollision += new OnCollisionEventHandler(OtherCollisions);
+			torso.OnCollision += new OnCollisionEventHandler(OtherCollisions);
+			leftUpperArm.OnCollision += new OnCollisionEventHandler(OtherCollisions);
+			leftLowerArm.OnCollision += new OnCollisionEventHandler(OtherCollisions);
+			rightUpperArm.OnCollision += new OnCollisionEventHandler(OtherCollisions);
+			rightLowerArm.OnCollision += new OnCollisionEventHandler(OtherCollisions);
+			leftUpperLeg.OnCollision += new OnCollisionEventHandler(OtherCollisions);
+			leftLowerLeg.OnCollision += new OnCollisionEventHandler(OtherCollisions);
+			rightUpperLeg.OnCollision += new OnCollisionEventHandler(OtherCollisions);
+			rightLowerLeg.OnCollision += new OnCollisionEventHandler(OtherCollisions);
 
 			Stand();
 		}
@@ -287,17 +294,26 @@ namespace Badminton.Stick_Figures
 			onGround = false;
 		}
 
-		private bool DamageCollision(Fixture fixtureA, Fixture fixtureB, Contact contact)
+		private bool OtherCollisions(Fixture fixtureA, Fixture fixtureB, Contact contact)
 		{
 			if (fixtureB.Body.UserData is Bullet)
 				health[fixtureA.Body] -= ((Bullet)fixtureB.Body.UserData).Damage;
+			else if (fixtureB.Body.UserData is Weapon)
+			{
+				if (fixtureB.Body.LinearVelocity.Length() <= 2f)
+					touchingWeapons.Add((Weapon)fixtureB.Body.UserData);
+				else
+				{
+					// Cause damage
+				}
+			}
 
 			return true;
 		}
 
 		#endregion
 
-		#region Stances
+		#region Actions
 
 		/// <summary>
 		/// Sends the stick figure to its default pose
@@ -319,16 +335,6 @@ namespace Badminton.Stick_Figures
 				leftLowerLeg.Friction = 100f;
 				rightLowerLeg.Friction = 100f;
 			}
-		}
-
-		/// <summary>
-		/// Causes the stick figure to point its arms in the direction of "position"
-		/// </summary>
-		/// <param name="position">The point at which the figure will direct its arms</param>
-		public void Aim(Vector2 position)
-		{
-			this.Aiming = true;
-			this.aimVector = position - (torso.Position * MainGame.RESOLUTION_SCALE - 15f * Vector2.UnitY * MainGame.PIXEL_TO_METER * MainGame.RESOLUTION_SCALE);
 		}
 
 		/// <summary>
@@ -475,6 +481,82 @@ namespace Badminton.Stick_Figures
 		}
 
 		/// <summary>
+		/// Picks up the weapon
+		/// </summary>
+		/// <param name="w"></param>
+		public void PickUpWeapon(Weapon w)
+		{
+			if (!w.BeingHeld && weapon == null && touchingWeapons.Contains(w))
+			{
+				if (health[leftLowerArm] == 0 && health[rightLowerArm] == 0)
+					return;
+
+				this.weapon = w;
+				this.weapon.PickUp(collisionCat);
+
+				if (health[leftLowerArm] >= health[rightLowerArm])
+				{
+					this.weapon.Position = leftLowerArm.Position;
+					r_weaponJoint = JointFactory.CreateRevoluteJoint(world, leftLowerArm, this.weapon.Body, Vector2.Zero);
+					weaponJoint = JointFactory.CreateAngleJoint(world, this.weapon.Body, leftLowerArm);
+				}
+				else
+				{
+					this.weapon.Position = rightLowerArm.Position;
+					r_weaponJoint = JointFactory.CreateRevoluteJoint(world, rightLowerArm, this.weapon.Body, Vector2.Zero);
+					weaponJoint = JointFactory.CreateAngleJoint(world, this.weapon.Body, rightLowerArm);
+				}
+				
+				weaponJoint.CollideConnected = false;
+				weaponJoint.TargetAngle = 0.0f;
+				weaponJoint.MaxImpulse = 100f;
+			}
+		}
+
+		/// <summary>
+		/// Causes the stick figure to point its arms in the direction of "position"
+		/// </summary>
+		/// <param name="position">The point at which the figure will direct its arms</param>
+		public void Aim(Vector2 position)
+		{
+			this.Aiming = true;
+			this.aimVector = position - (torso.Position * MainGame.RESOLUTION_SCALE - 15f * Vector2.UnitY * MainGame.PIXEL_TO_METER * MainGame.RESOLUTION_SCALE);
+		}
+
+		/// <summary>
+		/// Shoots the currently carried weapon, if applicable
+		/// </summary>
+		public void FireWeapon()
+		{
+			if (weapon != null)
+				weapon.Fire();
+		}
+
+		/// <summary>
+		/// Reloads the carried weapon
+		/// </summary>
+		public void ReloadWeapon()
+		{
+			if (weapon != null)
+				weapon.Reload();
+		}
+
+		/// <summary>
+		/// Swings the weapon
+		/// </summary>
+		public void Melee()
+		{
+		} // TODO
+
+		/// <summary>
+		/// Throws the weapon
+		/// </summary>
+		/// <param name="dir">The direction to throw the weapon in</param>
+		public void ThrowWeapon(Vector2 dir)
+		{
+		} // TODO
+
+		/// <summary>
 		/// Checks if all the joints in a list are close to their target angle
 		/// </summary>
 		/// <param name="joints">The array of joints to check</param>
@@ -510,6 +592,8 @@ namespace Badminton.Stick_Figures
 				groundCheck = 0;
 			if (groundCheck >= 5)
 				onGround = true;
+
+			touchingWeapons.Clear();
 		}
 
 		/// <summary>
@@ -551,17 +635,17 @@ namespace Badminton.Stick_Figures
 					angle -= MathHelper.TwoPi;
 				while (angle - leftShoulder.TargetAngle + 0.01f < -Math.PI)
 					angle += MathHelper.TwoPi;
-				leftShoulder.TargetAngle = angle - 0.05f;
+				leftShoulder.TargetAngle = angle;
 
 				angle = -(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2 + torso.Rotation;
 				while (angle - rightShoulder.TargetAngle + 0.01f > Math.PI)
 					angle -= MathHelper.TwoPi;
 				while (angle - rightShoulder.TargetAngle + 0.01f < -Math.PI)
 					angle += MathHelper.TwoPi;
-				rightShoulder.TargetAngle = angle + 0.05f;
+				rightShoulder.TargetAngle = angle;
 
-				leftElbow.TargetAngle = 0.05f;
-				rightElbow.TargetAngle = -0.05f;
+				leftElbow.TargetAngle = 0f;
+				rightElbow.TargetAngle = 0f;
 
 				Aiming = false;
 			}
@@ -578,10 +662,10 @@ namespace Badminton.Stick_Figures
 				health[b] = Math.Max(health[b], 0f);
 			upright.MaxImpulse = maxImpulse * health[torso] * health[head];
 			neck.MaxImpulse = maxImpulse * health[head] * health[torso];
-			leftShoulder.MaxImpulse = maxImpulse * health[torso] * health[leftUpperArm] * health[head] * 0.004f;
-			leftElbow.MaxImpulse = maxImpulse * health[leftUpperArm] * health[leftLowerArm] * health[torso] * health[head] * 0.004f;
-			rightShoulder.MaxImpulse = maxImpulse * health[torso] * health[rightUpperArm] * health[head] * 0.004f;
-			rightElbow.MaxImpulse = maxImpulse * health[rightUpperArm] * health[rightLowerArm] * health[torso] * health[head] * 0.004f;
+			leftShoulder.MaxImpulse = maxImpulse * health[torso] * health[leftUpperArm] * health[head];
+			leftElbow.MaxImpulse = maxImpulse * health[leftUpperArm] * health[leftLowerArm] * health[torso] * health[head];
+			rightShoulder.MaxImpulse = maxImpulse * health[torso] * health[rightUpperArm] * health[head];
+			rightElbow.MaxImpulse = maxImpulse * health[rightUpperArm] * health[rightLowerArm] * health[torso] * health[head];
 			leftHip.MaxImpulse = maxImpulse * health[torso] * health[leftUpperLeg] * health[head];
 			leftKnee.MaxImpulse = maxImpulse * health[leftUpperLeg] * health[leftLowerLeg] * health[torso] * health[head];
 			rightHip.MaxImpulse = maxImpulse * health[torso] * health[rightUpperLeg] * health[head];
@@ -593,17 +677,17 @@ namespace Badminton.Stick_Figures
 		/// </summary>
 		private void UpdateLimbAttachment()
 		{
-			if (health[leftUpperArm] <= 0 || health[leftLowerArm] <= 0)
+			// Left arm
+			if (health[leftUpperArm] <= 0 && health[leftLowerArm] <= 0)
 			{
-				if (health[leftUpperArm] <= 0)
-				{
-					health[leftLowerArm] = 0;
-					leftUpperArm.Friction = 3.0f;
-					if (world.JointList.Contains(leftShoulder))
-						world.RemoveJoint(leftShoulder);
-					if (world.JointList.Contains(r_leftShoulder))
-						world.RemoveJoint(r_leftShoulder);
-				}
+				leftUpperArm.Friction = 3.0f;
+				if (world.JointList.Contains(leftShoulder))
+					world.RemoveJoint(leftShoulder);
+				if (world.JointList.Contains(r_leftShoulder))
+					world.RemoveJoint(r_leftShoulder);
+			}
+			if (health[leftLowerArm] <= 0)
+			{
 				leftLowerArm.Friction = 3.0f;
 				if (world.JointList.Contains(leftElbow))
 					world.RemoveJoint(leftElbow);
@@ -611,17 +695,17 @@ namespace Badminton.Stick_Figures
 					world.RemoveJoint(r_leftElbow);
 			}
 
-			if (health[rightUpperArm] <= 0 || health[rightLowerArm] <= 0)
+			// Right arm
+			if (health[rightUpperArm] <= 0 && health[rightLowerArm] <= 0)
 			{
-				if (health[rightUpperArm] <= 0)
-				{
-					health[rightLowerArm] = 0;
-					rightUpperArm.Friction = 3.0f;
-					if (world.JointList.Contains(rightShoulder))
-						world.RemoveJoint(rightShoulder);
-					if (world.JointList.Contains(r_rightShoulder))
-						world.RemoveJoint(r_rightShoulder);
-				}
+				rightUpperArm.Friction = 3.0f;
+				if (world.JointList.Contains(rightShoulder))
+					world.RemoveJoint(rightShoulder);
+				if (world.JointList.Contains(r_rightShoulder))
+					world.RemoveJoint(r_rightShoulder);
+			}
+			if (health[rightLowerArm] <= 0)
+			{
 				rightLowerArm.Friction = 3.0f;
 				if (world.JointList.Contains(rightElbow))
 					world.RemoveJoint(rightElbow);
@@ -629,17 +713,17 @@ namespace Badminton.Stick_Figures
 					world.RemoveJoint(r_rightElbow);
 			}
 
-			if (health[leftUpperLeg] <= 0 || health[leftLowerLeg] <= 0)
+			// Left leg
+			if (health[leftUpperLeg] <= 0 && health[leftLowerLeg] <= 0)
 			{
-				if (health[leftUpperLeg] <= 0)
-				{
-					health[leftLowerLeg] = 0;
-					leftUpperLeg.Friction = 3.0f;
-					if (world.JointList.Contains(leftHip))
-						world.RemoveJoint(leftHip);
-					if (world.JointList.Contains(r_leftHip))
-						world.RemoveJoint(r_leftHip);
-				}
+				leftUpperLeg.Friction = 3.0f;
+				if (world.JointList.Contains(leftHip))
+					world.RemoveJoint(leftHip);
+				if (world.JointList.Contains(r_leftHip))
+					world.RemoveJoint(r_leftHip);
+			}
+			if (health[leftLowerLeg] <= 0)
+			{
 				leftLowerLeg.Friction = 3.0f;
 				if (world.JointList.Contains(leftKnee))
 					world.RemoveJoint(leftKnee);
@@ -647,17 +731,17 @@ namespace Badminton.Stick_Figures
 					world.RemoveJoint(r_leftKnee);
 			}
 
-			if (health[rightUpperLeg] <= 0 || health[rightLowerLeg] <= 0)
+			// Right leg
+			if (health[rightUpperLeg] <= 0 && health[rightLowerLeg] <= 0)
 			{
-				if (health[rightUpperLeg] <= 0)
-				{
-					health[rightLowerLeg] = 0;
-					rightUpperLeg.Friction = 3.0f;
-					if (world.JointList.Contains(rightHip))
-						world.RemoveJoint(rightHip);
-					if (world.JointList.Contains(r_rightHip))
-						world.RemoveJoint(r_rightHip);
-				}
+				rightUpperLeg.Friction = 3.0f;
+				if (world.JointList.Contains(rightHip))
+					world.RemoveJoint(rightHip);
+				if (world.JointList.Contains(r_rightHip))
+					world.RemoveJoint(r_rightHip);
+			}
+			if (health[rightLowerLeg] <= 0)
+			{
 				rightLowerLeg.Friction = 3.0f;
 				if (world.JointList.Contains(rightKnee))
 					world.RemoveJoint(rightKnee);
@@ -665,6 +749,7 @@ namespace Badminton.Stick_Figures
 					world.RemoveJoint(r_rightKnee);
 			}
 
+			// Torso
 			if (health[torso] <= 0)
 			{
 				torso.Friction = 3.0f;
@@ -672,7 +757,7 @@ namespace Badminton.Stick_Figures
 					world.RemoveJoint(upright);
 			}
 
-			// Change to just kill all limbs
+			// Head
 			if (health[head] <= 0)
 			{
 				head.Friction = 3.0f;
@@ -732,7 +817,7 @@ namespace Badminton.Stick_Figures
 			// Debug
 //			sb.DrawString(MainGame.fnt_basicFont, "L", LeftHandPosition * MainGame.METER_TO_PIXEL, Color.Blue);
 //			sb.DrawString(MainGame.fnt_basicFont, "R", RightHandPosition * MainGame.METER_TO_PIXEL, Color.Lime);
-//			sb.DrawString(MainGame.fnt_basicFont, groundCheck.ToString(), Vector2.Zero, Color.White);
+//			sb.DrawString(MainGame.fnt_basicFont, torso.Position.ToString(), Vector2.UnitY * 64, Color.White);
 		}
 
 		/// <summary>Blends the specified colors together.</summary>

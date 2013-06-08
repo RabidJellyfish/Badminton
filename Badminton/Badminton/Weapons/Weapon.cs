@@ -76,12 +76,32 @@ namespace Badminton.Weapons
 		}
 		protected int clipSize;
 
+		/// <summary>
+		/// Returns whether or not the gun is already in possesion of another player
+		/// </summary>
+		public bool BeingHeld { get; set; }
+
+		/// <summary>
+		/// Gets and sets the position of the gun
+		/// </summary>
+		public Vector2 Position
+		{
+			get { return this.gun.Position; }
+			set { this.gun.Position = value; }
+		}
+
+		/// <summary>
+		/// Gets the body of the gun
+		/// </summary>
+		public Body Body { get { return gun; } }
+
 		protected int refireTime; // In frames
-		private int refireCount;
+		protected int refireCount;
 
 		protected int reloadTime; // In frames
-		private int reloadCount;
+		protected int reloadCount;
 		protected bool reloading;
+		protected Category collisionCat;
 		WeaponType type;
 
 		/// <summary>
@@ -126,6 +146,9 @@ namespace Badminton.Weapons
 			gun.BodyType = BodyType.Dynamic;
 			gun.Position = position;
 			gun.UserData = this;
+			gun.CollisionCategories = Category.All;
+			gun.CollidesWith = Category.All;
+			gun.Mass = mass;
 		}
 
 		/// <summary>
@@ -133,18 +156,19 @@ namespace Badminton.Weapons
 		/// </summary>
 		public virtual void Update()
 		{
+
 			if (clipSize > 0)
 			{
 				if (reloading)
 				{
 					reloadCount++;
-					if ((int)(reloadTime / clipSize) % reloadCount == 0)
-						clipAmmo++;
-					if (clipAmmo == clipSize || ammo - clipAmmo == 0)
+					if (reloadCount % (int)(reloadTime / clipSize) == 0)
 					{
-						reloading = false;
-						ammo -= clipAmmo;
+						clipAmmo++;
+						ammo--;
 					}
+					if (clipAmmo == clipSize || ammo == 0)
+						reloading = false;
 				}
 			}
 
@@ -157,14 +181,14 @@ namespace Badminton.Weapons
 		/// </summary>
 		public virtual void Fire()
 		{
-			if (ammo > 0)
+			if (!reloading && refireCount == refireTime)
 			{
 				if (clipAmmo > 0)
 				{
 					refireCount = 0;
 					clipAmmo--;
 				}
-				else
+				else if (ammo > 0)
 					Reload();
 			}
 		}
@@ -174,11 +198,24 @@ namespace Badminton.Weapons
 		/// </summary>
 		public void Reload()
 		{
-			if (clipAmmo < clipSize && ammo > 0)
+			if (clipAmmo < clipSize && ammo > 0 && !reloading)
 			{
 				reloading = true;
 				reloadCount = 0;
 			}
+		}
+
+		/// <summary>
+		/// Sets the weapon up to be held
+		/// </summary>
+		/// <param name="collisionCat">The collision category of the player to be held by</param>
+		public void PickUp(Category collisionCat)
+		{
+			this.collisionCat = collisionCat;
+			this.gun.CollisionCategories = collisionCat;
+			this.gun.CollidesWith = Category.All & ~collisionCat;
+			this.BeingHeld = true;
+			this.Reload();
 		}
 
 		/// <summary>

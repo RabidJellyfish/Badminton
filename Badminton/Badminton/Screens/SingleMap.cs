@@ -33,6 +33,7 @@ namespace Badminton.Screens
 		World world;
 		List<Wall> walls;
 		List<Bullet> bulletList;
+		Weapon weapon;
 
 		LocalPlayer testFigure;
 		StickFigure dummyFigure;
@@ -43,7 +44,7 @@ namespace Badminton.Screens
 
 			testFigure = new LocalPlayer(world, new Vector2(480 * MainGame.PIXEL_TO_METER, 480 * MainGame.PIXEL_TO_METER), Category.Cat1, Color.Red);
 			dummyFigure = new StickFigure(world, new Vector2(150 * MainGame.PIXEL_TO_METER, 900 * MainGame.PIXEL_TO_METER), Category.Cat2, Color.Green);
-
+			weapon = new TestWeapon(world, new Vector2(640 * MainGame.PIXEL_TO_METER, 480 * MainGame.PIXEL_TO_METER));
 			walls = new List<Wall>();
 			walls.Add(new Wall(world, 480 * MainGame.PIXEL_TO_METER, 700 * MainGame.PIXEL_TO_METER, 960 * MainGame.PIXEL_TO_METER, 32 * MainGame.PIXEL_TO_METER, 0.0f));
 			walls.Add(new Wall(world, 16 * MainGame.PIXEL_TO_METER, 540 * MainGame.PIXEL_TO_METER, 32 * MainGame.PIXEL_TO_METER, 1080 * MainGame.PIXEL_TO_METER, 0.0f));
@@ -58,41 +59,11 @@ namespace Badminton.Screens
 			walls.Add(new Wall(world, 180 * MainGame.PIXEL_TO_METER, 300 * MainGame.PIXEL_TO_METER, 41 * MainGame.PIXEL_TO_METER, 370 * MainGame.PIXEL_TO_METER, 0.0f));
 
 			bulletList = new List<Bullet>();
-			i = 0;
 		}
 
-		private int i = 0;
 		public GameScreen Update(GameTime gameTime)
 		{
-			///////////////////////////////////////
-			// Put in Weapon/LocalPlayer classes //
-			///////////////////////////////////////
-			if ((Mouse.GetState().LeftButton == ButtonState.Pressed))
-			{
-				//i is used for fire rate. The bullet will fire once every 60/5 seconds in this case
-				if (i % 60 == 0)
-				{
-					Vector2 velocity = new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER - testFigure.RightHandPosition * MainGame.RESOLUTION_SCALE;
-					velocity.Normalize();
-					velocity *= 75f;
-					Bullet g = new TestBullet(world, Category.Cat1, testFigure.RightHandPosition, velocity);
-					bulletList.Add(g);
-					if (bulletList.Count > 50)
-						bulletList.RemoveAt(0);
-				}
-				i++;
-			}
-			else
-				i = 0;
-
-			List<Bullet> toRemove = new List<Bullet>();
-			foreach (Bullet b in bulletList)
-			{
-				b.Update();
-				if (b.Remove)
-					toRemove.Add(b);
-			}
-			/////////////////////////////////////////
+			weapon.Update();
 
 			testFigure.Update();
 			dummyFigure.Update();
@@ -111,8 +82,7 @@ namespace Badminton.Screens
 		{
 			testFigure.Draw(sb);
 			dummyFigure.Draw(sb);
-
-			sb.DrawString(MainGame.fnt_basicFont, dummyFigure.health[dummyFigure.head].ToString(), Vector2.Zero, Color.White);
+			weapon.Draw(sb);
 
 			foreach (Wall w in walls)
 				w.Draw(sb);

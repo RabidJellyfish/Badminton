@@ -119,6 +119,7 @@
     <Compile Include="Stick Figures\StickFigure.cs" />
     <Compile Include="Wall.cs" />
     <Compile Include="Weapons\TestBullet.cs" />
+    <Compile Include="Weapons\TestWeapon.cs" />
     <Compile Include="Weapons\Weapon.cs" />
   </ItemGroup>
   <ItemGroup>
