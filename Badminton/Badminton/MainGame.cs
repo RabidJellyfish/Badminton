@@ -35,7 +35,7 @@ namespace Badminton
 		Screens.GameScreen currentScreen;
 
 		public static SpriteFont fnt_basicFont;
-		public static Texture2D tex_box;
+		public static Texture2D tex_box, tex_bullet;
 		public static Texture2D tex_head, tex_torso, tex_limb;
 
 		private bool escapePressed;
@@ -78,6 +78,7 @@ namespace Badminton
 			fnt_basicFont = Content.Load<SpriteFont>("fonts/basicFont");
 
 			tex_box = Content.Load<Texture2D>("textures/box");
+			tex_bullet = Content.Load<Texture2D>("textures/boolit");
 			tex_head = Content.Load<Texture2D>("textures/stick figure/head");
 			tex_limb = Content.Load<Texture2D>("textures/stick figure/limb");
 			tex_torso = Content.Load<Texture2D>("textures/stick figure/torso");
@@ -133,6 +134,12 @@ namespace Badminton
 			spriteBatch.End();
 
 			base.Draw(gameTime);
+		}
+
+
+		public static bool BodyIsBullet(Body body)
+		{
+			return body.UserData != null && body.UserData.GetType() == typeof(Tuple<string, float>) && ((Tuple<string, float>)body.UserData).Item1 == "bullet";
 		}
 	}
 }

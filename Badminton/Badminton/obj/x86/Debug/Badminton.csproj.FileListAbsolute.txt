@@ -12,3 +12,4 @@ C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\B
 C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\stick figure\head.xnb
 C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\stick figure\limb.xnb
 C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\stick figure\torso.xnb
+C:\Users\Tad\Desktop\Documents\Visual Studio 2010\Projects\Badminton\Badminton\Badminton\bin\x86\Debug\Content\textures\boolit.xnb
