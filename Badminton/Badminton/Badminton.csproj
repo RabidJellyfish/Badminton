@@ -107,7 +107,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bullet.cs" />
+    <Compile Include="Weapons\Bullet.cs" />
     <Compile Include="Screens\GameScreen.cs" />
     <Compile Include="MainGame.cs" />
     <Compile Include="Screens\MainMenu.cs" />

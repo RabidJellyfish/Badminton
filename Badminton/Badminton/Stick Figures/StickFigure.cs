@@ -13,6 +13,8 @@ using FarseerPhysics.Dynamics.Joints;
 using FarseerPhysics.Dynamics.Contacts;
 using FarseerPhysics.Factories;
 
+using Badminton.Weapons;
+
 namespace Badminton.Stick_Figures
 {
 	class StickFigure
@@ -276,11 +278,8 @@ namespace Badminton.Stick_Figures
 
 		private bool DamageCollision(Fixture fixtureA, Fixture fixtureB, Contact contact)
 		{
-			if (MainGame.BodyIsBullet(fixtureB.Body))
-			{
-				float damage = ((Tuple<string, float>)fixtureB.Body.UserData).Item2;
-				health[fixtureA.Body] -= damage / 100f;
-			}
+			if (fixtureB.Body.UserData is Bullet)
+				health[fixtureA.Body] -= ((Bullet)fixtureB.Body.UserData).Damage;
 
 			return true;
 		}

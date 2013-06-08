@@ -102,6 +102,11 @@ namespace Badminton
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Update(GameTime gameTime)
 		{
+			if (Keyboard.GetState().IsKeyDown(Keys.Z))
+				this.TargetElapsedTime = TimeSpan.FromSeconds(0.3f);
+			else
+				this.TargetElapsedTime = TimeSpan.FromSeconds(0.016f);
+
 			// Allows the game to exit
 			if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
 			{
@@ -134,12 +139,6 @@ namespace Badminton
 			spriteBatch.End();
 
 			base.Draw(gameTime);
-		}
-
-
-		public static bool BodyIsBullet(Body body)
-		{
-			return body.UserData != null && body.UserData.GetType() == typeof(Tuple<string, float>) && ((Tuple<string, float>)body.UserData).Item1 == "bullet";
 		}
 	}
 }

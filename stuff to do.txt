@@ -1,0 +1,31 @@
+Add StickFigure subclasses
+	-> LocalPlayer 		(responds to keyboard/mouse)
+	-> AI			(responds to stimuli)
+	-> NetworkPlayer	(responds to network data?)
+
+	Base StickFigure instance data
+		(what it has now)
+		Weapon
+		 - need weapon anglejoint and r_weapon revolute joint
+	
+	StickFigure methods TODO
+		Melee(Vector2 dir) // Swings weapon in direction of vector
+		FireWeapon(Vector2 dir) // Shoots weapon, if possible
+		ThrowWeapon(Vector2 dir) // Throws weapon in the direction of dir
+
+
+Weapon
+	-> Subclass for each type, so they can each behave in unique ways if needed
+	
+	Weapon instance data
+		float mass
+		int totalAmmo
+		int clipAmmo
+		List<Bullet> bullets
+		int fireRate
+		int reloadSpeed
+
+	Weapon methods
+		Update()
+		Fire(Vector2 dir)
+		Draw()

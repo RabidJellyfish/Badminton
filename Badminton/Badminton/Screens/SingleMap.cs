@@ -18,6 +18,7 @@ using FarseerPhysics.Dynamics.Joints;
 using FarseerPhysics.Factories;
 
 using Badminton.Stick_Figures;
+using Badminton.Weapons;
 
 namespace Badminton.Screens
 {
@@ -39,7 +40,6 @@ namespace Badminton.Screens
 		public SingleMap()
 		{
 			world = new World(new Vector2(0, 9.8f)); // That'd be cool to have gravity as a map property, so you could play 0G levels
-			world.ContactManager.PreSolve += new PreSolveDelegate(PreSolve);
 
 			testFigure = new LocalPlayer(world, new Vector2(480 * MainGame.PIXEL_TO_METER, 480 * MainGame.PIXEL_TO_METER), Category.Cat1, Color.Red);
 			dummyFigure = new StickFigure(world, new Vector2(150 * MainGame.PIXEL_TO_METER, 900 * MainGame.PIXEL_TO_METER), Category.Cat2, Color.Green);
@@ -61,25 +61,6 @@ namespace Badminton.Screens
 			i = 0;
 		}
 
-		// Solves for bullet damage
-		public void PreSolve(Contact contact, ref Manifold manifold)
-		{
-			// Check which fixture is a bullet
-			Body bullet;
-			if (MainGame.BodyIsBullet(contact.FixtureA.Body))
-				bullet = contact.FixtureA.Body;
-			else if (MainGame.BodyIsBullet(contact.FixtureB.Body))
-				bullet = contact.FixtureB.Body;
-			else
-				return;
-
-			Body other = bullet == contact.FixtureA.Body ? contact.FixtureB.Body : contact.FixtureA.Body;
-
-			Vector2 normal = contact.Manifold.LocalNormal;
-			float damage = Math.Abs(Vector2.Dot(bullet.LinearVelocity * bullet.Mass, normal));
-			bullet.UserData = new Tuple<string, float>(((Tuple<string, float>)bullet.UserData).Item1, damage);
-		}
-
 		private int i = 0;
 		public GameScreen Update(GameTime gameTime)
 		{
@@ -89,12 +70,12 @@ namespace Badminton.Screens
 			if ((Mouse.GetState().LeftButton == ButtonState.Pressed))
 			{
 				//i is used for fire rate. The bullet will fire once every 60/5 seconds in this case
-				if (i % 5 == 0)
+				if (i % 60 == 0)
 				{
 					Vector2 velocity = new Vector2(Mouse.GetState().X * MainGame.PIXEL_TO_METER, Mouse.GetState().Y * MainGame.PIXEL_TO_METER) - testFigure.RightHandPosition;
 					velocity.Normalize();
 					velocity *= 75f;
-					Bullet g = new Bullet(world, Category.Cat1, testFigure.RightHandPosition, velocity, 1f);
+					Bullet g = new Bullet(world, Category.Cat1, testFigure.RightHandPosition, velocity, 0.1f);
 					bulletList.Add(g);
 					if (bulletList.Count > 50)
 						bulletList.RemoveAt(0);
@@ -108,11 +89,16 @@ namespace Badminton.Screens
 			testFigure.Update();
 			dummyFigure.Update();
 
+			List<Bullet> toRemove = new List<Bullet>();
 			foreach (Bullet b in bulletList)
+			{
 				b.Update();
+				if (b.Remove)
+					toRemove.Add(b);
+			}
 
 			// These two lines stay here, even after we delete testing stuff
-			world.Step((float)gameTime.ElapsedGameTime.TotalSeconds);
+			world.Step(0.016f); //(float)gameTime.ElapsedGameTime.TotalSeconds);
 			return this;
 		}
 
@@ -126,13 +112,12 @@ namespace Badminton.Screens
 			testFigure.Draw(sb);
 			dummyFigure.Draw(sb);
 
+			sb.DrawString(MainGame.fnt_basicFont, dummyFigure.health[dummyFigure.head].ToString(), Vector2.Zero, Color.White);
+
 			foreach (Wall w in walls)
 				w.Draw(sb);
 			foreach (Bullet b in bulletList)
 				b.Draw(sb);
-
-			if (bulletList.Count > 0)
-				sb.DrawString(MainGame.fnt_basicFont, bulletList[bulletList.Count - 1].Velocity.ToString(), Vector2.Zero, Color.White);
 		}
 	}
 }
