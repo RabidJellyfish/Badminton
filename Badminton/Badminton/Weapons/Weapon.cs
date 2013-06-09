@@ -125,7 +125,7 @@ namespace Badminton.Weapons
 		/// <param name="width">The width of the weapon</param>
 		/// <param name="height">The height of the weapon</param>
 		/// <param name="mass">The mass of the weapon</param>
-		public Weapon(World world, Vector2 position, WeaponType type, float width, float height, float mass)
+		public Weapon(World world, Vector2 position, WeaponType type, float width, float height, float density)
 		{
 			this.world = world;
 			this.ammoCapacity = 0;
@@ -142,13 +142,21 @@ namespace Badminton.Weapons
 
 			this.type = type;
 
-			gun = BodyFactory.CreateRectangle(world, width, height, 1f);
+			gun = BodyFactory.CreateRectangle(world, width, height, density);
 			gun.BodyType = BodyType.Dynamic;
 			gun.Position = position;
+			gun.Restitution = 0.3f;
 			gun.UserData = this;
 			gun.CollisionCategories = Category.All;
 			gun.CollidesWith = Category.All;
-			gun.Mass = mass;
+			gun.OnCollision += new OnCollisionEventHandler(ResetCollisionCategory);
+		}
+
+		private bool ResetCollisionCategory(Fixture fixA, Fixture fixB, Contact contact)
+		{
+			gun.CollisionCategories = Category.All & ~Category.Cat1;
+			gun.CollidesWith = Category.All & ~Category.Cat1;
+			return contact.IsTouching();
 		}
 
 		/// <summary>
@@ -156,6 +164,11 @@ namespace Badminton.Weapons
 		/// </summary>
 		public virtual void Update()
 		{
+			if (!BeingHeld)
+			{
+				this.gun.CollisionCategories = Category.All;
+				this.gun.CollidesWith = Category.All;
+			}
 
 			if (clipSize > 0)
 			{
@@ -213,7 +226,7 @@ namespace Badminton.Weapons
 		{
 			this.collisionCat = collisionCat;
 			this.gun.CollisionCategories = collisionCat;
-			this.gun.CollidesWith = Category.All & ~collisionCat;
+			this.gun.CollidesWith = Category.None;
 			this.BeingHeld = true;
 			this.Reload();
 		}

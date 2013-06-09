@@ -22,8 +22,8 @@ namespace Badminton.Stick_Figures
 		private World world;
 
 		// Ragdoll
-		private Body torso, head, leftUpperArm, rightUpperArm, leftLowerArm, rightLowerArm, leftUpperLeg, rightUpperLeg, leftLowerLeg, rightLowerLeg;
-		private Body gyro;
+		protected Body torso, head, leftUpperArm, rightUpperArm, leftLowerArm, rightLowerArm, leftUpperLeg, rightUpperLeg, leftLowerLeg, rightLowerLeg;
+		protected Body gyro;
 		private AngleJoint neck, leftShoulder, rightShoulder, leftElbow, rightElbow, leftHip, rightHip, leftKnee, rightKnee;
 		private AngleJoint weaponJoint;
 		private RevoluteJoint r_neck, r_leftShoulder, r_rightShoulder, r_leftElbow, r_rightElbow, r_leftHip, r_rightHip, r_leftKnee, r_rightKnee;
@@ -85,6 +85,7 @@ namespace Badminton.Stick_Figures
 		private int groundCheck;
 		private Category collisionCat;
 		protected List<Weapon> touchingWeapons;
+		private bool leftHanded;
 		
 		public StickFigure(World world, Vector2 position, Category collisionCat, Color c)
 		{
@@ -98,6 +99,7 @@ namespace Badminton.Stick_Figures
 			groundCheck = 0;
 			touchingWeapons = new List<Weapon>();
 			this.collisionCat = collisionCat;
+			leftHanded = true;
 
 			GenerateBody(world, position, collisionCat);
 			ConnectBody(world);
@@ -304,7 +306,6 @@ namespace Badminton.Stick_Figures
 					touchingWeapons.Add((Weapon)fixtureB.Body.UserData);
 				else
 				{
-					// Cause damage
 				}
 			}
 
@@ -493,22 +494,27 @@ namespace Badminton.Stick_Figures
 
 				this.weapon = w;
 				this.weapon.PickUp(collisionCat);
-
+				
+				float angle;
 				if (health[leftLowerArm] >= health[rightLowerArm])
 				{
 					this.weapon.Position = leftLowerArm.Position;
 					r_weaponJoint = JointFactory.CreateRevoluteJoint(world, leftLowerArm, this.weapon.Body, Vector2.Zero);
 					weaponJoint = JointFactory.CreateAngleJoint(world, this.weapon.Body, leftLowerArm);
+					leftHanded = true;
+					angle = leftLowerArm.Rotation - weapon.Body.Rotation;
 				}
 				else
 				{
 					this.weapon.Position = rightLowerArm.Position;
 					r_weaponJoint = JointFactory.CreateRevoluteJoint(world, rightLowerArm, this.weapon.Body, Vector2.Zero);
 					weaponJoint = JointFactory.CreateAngleJoint(world, this.weapon.Body, rightLowerArm);
+					leftHanded = false;
+					angle = rightLowerArm.Rotation - weapon.Body.Rotation;
 				}
-				
+
+				weaponJoint.TargetAngle = (int)(angle / MathHelper.TwoPi) * MathHelper.TwoPi;
 				weaponJoint.CollideConnected = false;
-				weaponJoint.TargetAngle = 0.0f;
 				weaponJoint.MaxImpulse = 100f;
 			}
 		}
@@ -610,6 +616,7 @@ namespace Badminton.Stick_Figures
 			if (!Aiming)
 			{
 				// Rest arms at side
+				// TODO: change based on type of weapon being held
 				float angle = 3 * MathHelper.PiOver4;
 				while (angle - leftShoulder.TargetAngle + 0.01f > Math.PI)
 					angle -= MathHelper.TwoPi;
@@ -629,7 +636,7 @@ namespace Badminton.Stick_Figures
 			}
 			else
 			{
-				// Change for carrying light, mid, or heavy weapons?
+				// TODO: Change for carrying light, mid, or heavy weapons
 				float angle = -(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2 + torso.Rotation;
 				while (angle - leftShoulder.TargetAngle + 0.01f > Math.PI)
 					angle -= MathHelper.TwoPi;
@@ -693,6 +700,16 @@ namespace Badminton.Stick_Figures
 					world.RemoveJoint(leftElbow);
 				if (world.JointList.Contains(r_leftElbow))
 					world.RemoveJoint(r_leftElbow);
+				if (leftHanded && weapon != null)
+				{
+					weaponJoint.MaxImpulse = 0f;
+					if (world.JointList.Contains(weaponJoint))
+						world.RemoveJoint(weaponJoint);
+					if (world.JointList.Contains(r_weaponJoint))
+						world.RemoveJoint(r_weaponJoint);
+					weapon.BeingHeld = false;
+					this.weapon = null;
+				}
 			}
 
 			// Right arm
@@ -711,6 +728,15 @@ namespace Badminton.Stick_Figures
 					world.RemoveJoint(rightElbow);
 				if (world.JointList.Contains(r_rightElbow))
 					world.RemoveJoint(r_rightElbow);
+				if (!leftHanded && weapon != null)
+				{
+					if (world.JointList.Contains(weaponJoint))
+						world.RemoveJoint(weaponJoint);
+					if (world.JointList.Contains(r_weaponJoint))
+						world.RemoveJoint(r_weaponJoint);
+					weapon.BeingHeld = false;
+					this.weapon = null;
+				}
 			}
 
 			// Left leg

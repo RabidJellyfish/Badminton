@@ -25,6 +25,9 @@ namespace Badminton.Stick_Figures
 
 		public override void Update()
 		{
+//			if (this.weapon != null)
+//				health[leftLowerArm] -= 0.001f;
+
 			if (Keyboard.GetState().IsKeyDown(Keys.Q) && touchingWeapons.Count > 0)
 				PickUpWeapon(touchingWeapons[0]);
 

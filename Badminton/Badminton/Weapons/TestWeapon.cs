@@ -20,7 +20,7 @@ namespace Badminton.Weapons
 		private List<Bullet> bullets;
 
 		public TestWeapon(World world, Vector2 position)
-			: base (world, position, WeaponType.Medium, 16 * MainGame.PIXEL_TO_METER, 48 * MainGame.PIXEL_TO_METER, 0.0001f)
+			: base (world, position, WeaponType.Medium, 16 * MainGame.PIXEL_TO_METER, 48 * MainGame.PIXEL_TO_METER, 0.01f)
 		{
 			bullets = new List<Bullet>();
 
@@ -29,7 +29,7 @@ namespace Badminton.Weapons
 			this.clipSize = 50;
 			this.clipAmmo = 0;
 
-			this.refireTime = 5;
+			this.refireTime = 10;
 			this.reloadTime = 120;
 		}
 
@@ -57,7 +57,7 @@ namespace Badminton.Weapons
 				velocity.Normalize();
 				velocity *= 75f;
 				Bullet b = new TestBullet(world, this.collisionCat, firePos, velocity);
-				gun.ApplyForce(velocity * -1 * b.Mass);
+				gun.ApplyForce(velocity * -1 * b.Mass * 4f);
 				bullets.Add(b);
 				if (bullets.Count > 50)
 					bullets.RemoveAt(0);
