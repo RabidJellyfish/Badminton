@@ -24,7 +24,7 @@ namespace Badminton.Weapons
 			bullet.Restitution = 0.5f;
 			bullet.FixedRotation = true;
 			bullet.Mass = 1f;
-			this.Damage = 100f;
+			this.Damage = .1f;
 		}
 
 		public override void Update()

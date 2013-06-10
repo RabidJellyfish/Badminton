@@ -95,6 +95,12 @@ namespace Badminton.Weapons
 		/// </summary>
 		public Body Body { get { return gun; } }
 
+		/// <summary>
+		/// Gets the weapon's type
+		/// </summary>
+		public WeaponType Type { get { return type; } }
+		protected WeaponType type;
+
 		protected int refireTime; // In frames
 		protected int refireCount;
 
@@ -102,7 +108,6 @@ namespace Badminton.Weapons
 		protected int reloadCount;
 		protected bool reloading;
 		protected Category collisionCat;
-		WeaponType type;
 
 		/// <summary>
 		/// Specifies a type of weapon

@@ -53,11 +53,11 @@ namespace Badminton.Weapons
 			if (refireCount == refireTime && clipAmmo > 0 && !reloading)
 			{
 				Vector2 velocity = new Vector2((float)Math.Sin(gun.Rotation), -(float)Math.Cos(gun.Rotation));
-				Vector2 firePos = gun.Position + velocity;
+				Vector2 firePos = gun.Position;
 				velocity.Normalize();
 				velocity *= 75f;
 				Bullet b = new TestBullet(world, this.collisionCat, firePos, velocity);
-				gun.ApplyForce(velocity * -1 * b.Mass * 4f);
+				gun.ApplyForce(velocity * b.Mass * -1);
 				bullets.Add(b);
 				if (bullets.Count > 50)
 					bullets.RemoveAt(0);
@@ -72,7 +72,7 @@ namespace Badminton.Weapons
 				r -= MathHelper.TwoPi;
 			while (r < -Math.PI)
 				r += MathHelper.TwoPi;
-			sb.Draw(MainGame.tex_gun, gun.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, gun.Rotation, new Vector2(16, 48), 0.6f * MainGame.RESOLUTION_SCALE, gun.Rotation > 0 ? SpriteEffects.None : SpriteEffects.FlipHorizontally, 0.0f);
+			sb.Draw(MainGame.tex_gun, gun.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, r, new Vector2(16, 48), 0.6f * MainGame.RESOLUTION_SCALE, r > 0 ? SpriteEffects.None : SpriteEffects.FlipHorizontally, 0.0f);
 			foreach (Bullet b in bullets)
 				b.Draw(sb);
 		}

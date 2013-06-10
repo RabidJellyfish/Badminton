@@ -48,9 +48,7 @@ namespace Badminton.Stick_Figures
 			get
 			{
 				if (health[leftLowerArm] > 0)
-					return leftLowerArm.Position + new Vector2((float)-Math.Cos(leftLowerArm.Rotation), (float)-Math.Sin(leftLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
-				else if (health[leftUpperArm] > 0)
-					return leftUpperArm.Position + new Vector2((float)Math.Sin(leftUpperArm.Rotation), -(float)Math.Cos(leftUpperArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+					return leftLowerArm.Position + new Vector2((float)-Math.Sin(leftLowerArm.Rotation), -(float)Math.Cos(leftLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
 				else
 					return -Vector2.One;
 			}
@@ -64,9 +62,7 @@ namespace Badminton.Stick_Figures
 			get
 			{
 				if (health[rightLowerArm] > 0)
-					return rightLowerArm.Position + new Vector2((float)-Math.Cos(rightLowerArm.Rotation), (float)-Math.Sin(rightLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
-				else if (health[rightUpperArm] > 0)
-					return rightUpperArm.Position + new Vector2((float)Math.Sin(rightUpperArm.Rotation), -(float)Math.Cos(rightUpperArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+					return rightLowerArm.Position + new Vector2((float)-Math.Sin(rightLowerArm.Rotation), (float)-Math.Cos(rightLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
 				else
 					return -Vector2.One;
 			}
@@ -75,12 +71,12 @@ namespace Badminton.Stick_Figures
 		// Action flags
 		public bool Aiming { get; set; }
 		public bool Crouching { get; set; }
+		private int walkStage;
 
 		// Other
 		private Color color;
 		protected Weapon weapon;
 		private Vector2 aimVector;
-		private int walkStage;
 		private bool onGround;
 		private int groundCheck;
 		private Category collisionCat;
@@ -333,8 +329,8 @@ namespace Badminton.Stick_Figures
 			AngleJoint[] checkThese = new AngleJoint[] { leftHip, leftKnee, rightHip, rightKnee };
 			if (JointsAreInPosition(checkThese))
 			{
-				leftLowerLeg.Friction = 100f;
-				rightLowerLeg.Friction = 100f;
+				leftLowerLeg.Friction = 1f;
+				rightLowerLeg.Friction = 1f;
 			}
 		}
 
@@ -472,8 +468,8 @@ namespace Badminton.Stick_Figures
 		/// </summary>
 		public void Crouch()
 		{
-			leftLowerLeg.Friction = 0.1f;
-			rightLowerLeg.Friction = 0.1f;
+			leftLowerLeg.Friction = 3f;
+			rightLowerLeg.Friction = 3f;
 			upright.TargetAngle = 0.0f;
 			leftHip.TargetAngle = MathHelper.PiOver4;
 			leftKnee.TargetAngle = -7 * MathHelper.PiOver4;
@@ -498,7 +494,7 @@ namespace Badminton.Stick_Figures
 				float angle;
 				if (health[leftLowerArm] >= health[rightLowerArm])
 				{
-					this.weapon.Position = leftLowerArm.Position;
+					this.weapon.Position = LeftHandPosition; //leftLowerArm.Position;
 					r_weaponJoint = JointFactory.CreateRevoluteJoint(world, leftLowerArm, this.weapon.Body, Vector2.Zero);
 					weaponJoint = JointFactory.CreateAngleJoint(world, this.weapon.Body, leftLowerArm);
 					leftHanded = true;
@@ -506,7 +502,7 @@ namespace Badminton.Stick_Figures
 				}
 				else
 				{
-					this.weapon.Position = rightLowerArm.Position;
+					this.weapon.Position = RightHandPosition; //rightLowerArm.Position;
 					r_weaponJoint = JointFactory.CreateRevoluteJoint(world, rightLowerArm, this.weapon.Body, Vector2.Zero);
 					weaponJoint = JointFactory.CreateAngleJoint(world, this.weapon.Body, rightLowerArm);
 					leftHanded = false;
@@ -535,7 +531,14 @@ namespace Badminton.Stick_Figures
 		public void FireWeapon()
 		{
 			if (weapon != null)
-				weapon.Fire();
+			{
+				if (this.weapon.Type == Weapon.WeaponType.Melee)
+					this.Melee();
+				else if (this.weapon.Type == Weapon.WeaponType.Explosive)
+					this.ThrowWeapon(aimVector);
+				else
+					weapon.Fire();
+			}
 		}
 
 		/// <summary>
@@ -586,6 +589,8 @@ namespace Badminton.Stick_Figures
 		/// </summary>
 		public virtual void Update()
 		{
+//			health[leftLowerArm] = 0.5f;
+
 			UpdateArms();
 			UpdateLimbStrength();
 			UpdateLimbAttachment();
@@ -616,43 +621,74 @@ namespace Badminton.Stick_Figures
 			if (!Aiming)
 			{
 				// Rest arms at side
-				// TODO: change based on type of weapon being held
-				float angle = 3 * MathHelper.PiOver4;
-				while (angle - leftShoulder.TargetAngle + 0.01f > Math.PI)
-					angle -= MathHelper.TwoPi;
-				while (angle - leftShoulder.TargetAngle + 0.01f < -Math.PI)
-					angle += MathHelper.TwoPi;
-				leftShoulder.TargetAngle = angle;
-
-				angle = -3 * MathHelper.PiOver4;
-				while (angle - rightShoulder.TargetAngle + 0.01f > Math.PI)
-					angle -= MathHelper.TwoPi;
-				while (angle - rightShoulder.TargetAngle + 0.01f < -Math.PI)
-					angle += MathHelper.TwoPi;
-				rightShoulder.TargetAngle = angle;
-
-				leftElbow.TargetAngle = MathHelper.PiOver4;
-				rightElbow.TargetAngle = -MathHelper.PiOver4;
+				if (weapon == null || weapon.Type == Weapon.WeaponType.Light || weapon.Type == Weapon.WeaponType.Explosive)
+				{
+					leftShoulder.TargetAngle = FindClosestAngle(3 * MathHelper.PiOver4, torso.Rotation, leftShoulder.TargetAngle);
+					rightShoulder.TargetAngle = FindClosestAngle(-3 * MathHelper.PiOver4, torso.Rotation, rightShoulder.TargetAngle);
+					leftElbow.TargetAngle = MathHelper.PiOver4;
+					rightElbow.TargetAngle = -MathHelper.PiOver4;
+				}
+				else if (weapon.Type == Weapon.WeaponType.Medium)
+				{
+					if (leftHanded)
+					{
+						leftShoulder.TargetAngle = FindClosestAngle(3 * MathHelper.PiOver4, torso.Rotation, leftShoulder.TargetAngle);
+						rightShoulder.TargetAngle = FindClosestAngle(-3 * MathHelper.PiOver4, torso.Rotation, rightShoulder.TargetAngle);
+						leftElbow.TargetAngle = MathHelper.PiOver2;
+						rightElbow.TargetAngle = -MathHelper.PiOver4;
+					}
+					else
+					{
+						leftShoulder.TargetAngle = FindClosestAngle(3 * MathHelper.PiOver4, torso.Rotation, leftShoulder.TargetAngle);
+						rightShoulder.TargetAngle = FindClosestAngle(-3 * MathHelper.PiOver4, torso.Rotation, rightShoulder.TargetAngle);
+						leftElbow.TargetAngle = MathHelper.PiOver4;
+						rightElbow.TargetAngle = -MathHelper.PiOver2;
+					}
+				}
+				else if (weapon.Type == Weapon.WeaponType.Heavy)
+				{
+				}
+				else if (weapon.Type == Weapon.WeaponType.Melee)
+				{
+				}
 			}
 			else
 			{
 				// TODO: Change for carrying light, mid, or heavy weapons
-				float angle = -(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2 + torso.Rotation;
-				while (angle - leftShoulder.TargetAngle + 0.01f > Math.PI)
-					angle -= MathHelper.TwoPi;
-				while (angle - leftShoulder.TargetAngle + 0.01f < -Math.PI)
-					angle += MathHelper.TwoPi;
-				leftShoulder.TargetAngle = angle;
-
-				angle = -(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2 + torso.Rotation;
-				while (angle - rightShoulder.TargetAngle + 0.01f > Math.PI)
-					angle -= MathHelper.TwoPi;
-				while (angle - rightShoulder.TargetAngle + 0.01f < -Math.PI)
-					angle += MathHelper.TwoPi;
-				rightShoulder.TargetAngle = angle;
-
-				leftElbow.TargetAngle = 0f;
-				rightElbow.TargetAngle = 0f;
+				if (weapon == null || weapon.Type == Weapon.WeaponType.Light)
+				{
+					leftShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
+					rightShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, rightShoulder.TargetAngle);
+					leftElbow.TargetAngle = 0f;
+					rightElbow.TargetAngle = 0f;
+				}
+				else if (weapon.Type == Weapon.WeaponType.Medium)
+				{
+					float angle = -(float)Math.Atan2(aimVector.Y, aimVector.X);
+					if (leftHanded)
+					{
+						leftShoulder.TargetAngle = FindClosestAngle(angle - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
+						rightShoulder.TargetAngle = FindClosestAngle(angle + (angle >= MathHelper.PiOver2 || angle <= -MathHelper.PiOver2 ? -MathHelper.PiOver4 : -3 * MathHelper.PiOver4), torso.Rotation, rightShoulder.TargetAngle);
+						leftElbow.TargetAngle = 0f;
+						rightElbow.TargetAngle = angle >= MathHelper.PiOver2 || angle <= -MathHelper.PiOver2 ? -MathHelper.PiOver2 : MathHelper.PiOver2;
+					}
+					else
+					{
+						leftShoulder.TargetAngle = FindClosestAngle(angle + (angle >= MathHelper.PiOver2 || angle <= -MathHelper.PiOver2 ? -MathHelper.PiOver4 : -3 * MathHelper.PiOver4), torso.Rotation, rightShoulder.TargetAngle);
+						rightShoulder.TargetAngle = FindClosestAngle(angle - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
+						leftElbow.TargetAngle = angle >= MathHelper.PiOver2 || angle <= -MathHelper.PiOver2 ? -MathHelper.PiOver2 : MathHelper.PiOver2;
+						rightElbow.TargetAngle = 0f;
+					}
+				}
+				else if (weapon.Type == Weapon.WeaponType.Heavy)
+				{
+				}
+				else if (weapon.Type == Weapon.WeaponType.Explosive)
+				{
+				}
+				else if (weapon.Type == Weapon.WeaponType.Melee)
+				{
+				}
 
 				Aiming = false;
 			}
@@ -805,10 +841,31 @@ namespace Badminton.Stick_Figures
 
 		#endregion
 
+		#region Helpers/debug
+
 		public void ApplyForce(Vector2 v)
 		{
 			torso.ApplyForce(v * 10);
 		}
+
+		/// <summary>
+		/// Finds the closest physical angle to a pair of numerical angles which may vary by more than 2pi
+		/// </summary>
+		/// <param name="physAngle">The physical angle you wish to achieve</param>
+		/// <param name="numAngle1">The first numerical angle</param>
+		/// <param name="numAngle2">The second numerical angle</param>
+		/// <returns>A numerical angle which is physically the same as physAngle</returns>
+		private float FindClosestAngle(float physAngle, float numAngle1, float numAngle2)
+		{
+			physAngle += numAngle1;
+			while (physAngle - numAngle2 > Math.PI)
+				physAngle -= MathHelper.TwoPi;
+			while (physAngle - numAngle2 < -Math.PI)
+				physAngle += MathHelper.TwoPi;
+			return physAngle;
+		}
+
+		#endregion
 
 		#region Drawing
 
