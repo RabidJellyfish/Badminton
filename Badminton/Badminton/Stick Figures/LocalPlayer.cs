@@ -25,10 +25,7 @@ namespace Badminton.Stick_Figures
 
 		public override void Update()
 		{
-//			if (this.weapon != null)
-//				health[leftLowerArm] -= 0.001f;
-
-			if (Keyboard.GetState().IsKeyDown(Keys.Q) && touchingWeapons.Count > 0)
+			if (Keyboard.GetState().IsKeyDown(Keys.S) && touchingWeapons.Count > 0)
 				PickUpWeapon(touchingWeapons[0]);
 
 			if (Mouse.GetState().RightButton == ButtonState.Pressed)
@@ -41,9 +38,9 @@ namespace Badminton.Stick_Figures
 				ReloadWeapon();
 
 			if (Keyboard.GetState().IsKeyDown(Keys.E))
-				Melee();
+				Melee(); // Change to switch hands
 
-			if (Keyboard.GetState().IsKeyDown(Keys.F))
+			if (Keyboard.GetState().IsKeyDown(Keys.Q))
 				ThrowWeapon(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);
 
 			bool stand = true;

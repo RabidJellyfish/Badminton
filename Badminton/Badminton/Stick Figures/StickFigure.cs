@@ -48,7 +48,7 @@ namespace Badminton.Stick_Figures
 			get
 			{
 				if (health[leftLowerArm] > 0)
-					return leftLowerArm.Position + new Vector2((float)-Math.Sin(leftLowerArm.Rotation), -(float)Math.Cos(leftLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+					return leftLowerArm.Position + new Vector2((float)Math.Sin(leftLowerArm.Rotation), -(float)Math.Cos(leftLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
 				else
 					return -Vector2.One;
 			}
@@ -62,7 +62,7 @@ namespace Badminton.Stick_Figures
 			get
 			{
 				if (health[rightLowerArm] > 0)
-					return rightLowerArm.Position + new Vector2((float)-Math.Sin(rightLowerArm.Rotation), (float)-Math.Cos(rightLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
+					return rightLowerArm.Position + new Vector2((float)Math.Sin(rightLowerArm.Rotation), -(float)Math.Cos(rightLowerArm.Rotation)) * 7.5f * MainGame.PIXEL_TO_METER;
 				else
 					return -Vector2.One;
 			}
@@ -72,6 +72,7 @@ namespace Badminton.Stick_Figures
 		public bool Aiming { get; set; }
 		public bool Crouching { get; set; }
 		private int walkStage;
+		private bool throwing;
 
 		// Other
 		private Color color;
@@ -92,6 +93,7 @@ namespace Badminton.Stick_Figures
 			health = new Dictionary<Body, float>();
 			this.color = c;
 			walkStage = 0;
+			throwing = false;
 			groundCheck = 0;
 			touchingWeapons = new List<Weapon>();
 			this.collisionCat = collisionCat;
@@ -494,19 +496,19 @@ namespace Badminton.Stick_Figures
 				float angle;
 				if (health[leftLowerArm] >= health[rightLowerArm])
 				{
-					this.weapon.Position = LeftHandPosition; //leftLowerArm.Position;
+					this.weapon.Position = LeftHandPosition;
 					r_weaponJoint = JointFactory.CreateRevoluteJoint(world, leftLowerArm, this.weapon.Body, Vector2.Zero);
-					weaponJoint = JointFactory.CreateAngleJoint(world, this.weapon.Body, leftLowerArm);
+					weaponJoint = JointFactory.CreateAngleJoint(world, leftLowerArm, this.weapon.Body);
 					leftHanded = true;
-					angle = leftLowerArm.Rotation - weapon.Body.Rotation;
+					angle = weapon.Body.Rotation - leftLowerArm.Rotation;
 				}
 				else
 				{
-					this.weapon.Position = RightHandPosition; //rightLowerArm.Position;
+					this.weapon.Position = RightHandPosition;
 					r_weaponJoint = JointFactory.CreateRevoluteJoint(world, rightLowerArm, this.weapon.Body, Vector2.Zero);
-					weaponJoint = JointFactory.CreateAngleJoint(world, this.weapon.Body, rightLowerArm);
+					weaponJoint = JointFactory.CreateAngleJoint(world, rightLowerArm, this.weapon.Body);
 					leftHanded = false;
-					angle = rightLowerArm.Rotation - weapon.Body.Rotation;
+					angle = weapon.Body.Rotation - rightLowerArm.Rotation;
 				}
 
 				weaponJoint.TargetAngle = (int)(angle / MathHelper.TwoPi) * MathHelper.TwoPi;
@@ -561,9 +563,14 @@ namespace Badminton.Stick_Figures
 		/// Throws the weapon
 		/// </summary>
 		/// <param name="dir">The direction to throw the weapon in</param>
-		public void ThrowWeapon(Vector2 dir)
+		public void ThrowWeapon(Vector2 position)
 		{
-		} // TODO
+			if (!throwing && weapon != null)
+			{
+				throwing = true;
+				this.aimVector = position - (torso.Position * MainGame.RESOLUTION_SCALE - 15f * Vector2.UnitY * MainGame.PIXEL_TO_METER * MainGame.RESOLUTION_SCALE);
+			}
+		}
 
 		/// <summary>
 		/// Checks if all the joints in a list are close to their target angle
@@ -618,7 +625,7 @@ namespace Badminton.Stick_Figures
 			rightElbow.MaxImpulse = maxImpulse * health[rightLowerArm] * health[rightUpperArm];
 			rightShoulder.MaxImpulse = maxImpulse * health[torso] * health[rightUpperArm];
 
-			if (!Aiming)
+			if (!Aiming && !throwing)
 			{
 				// Rest arms at side
 				if (weapon == null || weapon.Type == Weapon.WeaponType.Light || weapon.Type == Weapon.WeaponType.Explosive)
@@ -628,7 +635,7 @@ namespace Badminton.Stick_Figures
 					leftElbow.TargetAngle = MathHelper.PiOver4;
 					rightElbow.TargetAngle = -MathHelper.PiOver4;
 				}
-				else if (weapon.Type == Weapon.WeaponType.Medium)
+				else if (weapon.Type == Weapon.WeaponType.Medium || weapon.Type == Weapon.WeaponType.Heavy)
 				{
 					if (leftHanded)
 					{
@@ -645,16 +652,13 @@ namespace Badminton.Stick_Figures
 						rightElbow.TargetAngle = -MathHelper.PiOver2;
 					}
 				}
-				else if (weapon.Type == Weapon.WeaponType.Heavy)
-				{
-				}
 				else if (weapon.Type == Weapon.WeaponType.Melee)
 				{
+					// TODO
 				}
 			}
-			else
+			else if (Aiming && !throwing)
 			{
-				// TODO: Change for carrying light, mid, or heavy weapons
 				if (weapon == null || weapon.Type == Weapon.WeaponType.Light)
 				{
 					leftShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
@@ -682,15 +686,39 @@ namespace Badminton.Stick_Figures
 				}
 				else if (weapon.Type == Weapon.WeaponType.Heavy)
 				{
+					// TODO
 				}
 				else if (weapon.Type == Weapon.WeaponType.Explosive)
 				{
+					// TODO
 				}
 				else if (weapon.Type == Weapon.WeaponType.Melee)
 				{
+					// TODO
 				}
 
 				Aiming = false;
+			}
+			else
+			{
+				leftShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
+				rightShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, rightShoulder.TargetAngle);
+				leftElbow.TargetAngle = 0f;
+				rightElbow.TargetAngle = 0f;
+
+				AngleJoint[] joints = new AngleJoint[] { leftShoulder, leftElbow, rightShoulder, rightElbow };
+				if (JointsAreInPosition(joints))
+				{
+					if (world.JointList.Contains(weaponJoint))
+						world.RemoveJoint(weaponJoint);
+					if (world.JointList.Contains(r_weaponJoint))
+						world.RemoveJoint(r_weaponJoint);
+					weapon.BeingHeld = false;
+					weapon.Body.LinearVelocity = aimVector / aimVector.Length() * 10f + this.torso.LinearVelocity;
+					this.weapon = null;
+
+					throwing = false;
+				}
 			}
 		}
 
