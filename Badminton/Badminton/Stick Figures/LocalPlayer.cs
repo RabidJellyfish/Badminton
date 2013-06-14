@@ -38,7 +38,7 @@ namespace Badminton.Stick_Figures
 				ReloadWeapon();
 
 			if (Keyboard.GetState().IsKeyDown(Keys.E))
-				Melee(); // Change to switch hands
+				Melee(); // Change to switch hands eventually
 
 			if (Keyboard.GetState().IsKeyDown(Keys.Q))
 				ThrowWeapon(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);

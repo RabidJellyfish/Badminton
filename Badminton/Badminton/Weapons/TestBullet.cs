@@ -23,8 +23,8 @@ namespace Badminton.Weapons
 		{
 			bullet.Restitution = 0.5f;
 			bullet.FixedRotation = true;
-			bullet.Mass = 1f;
-			this.Damage = .1f;
+			bullet.Mass = 0.1f;
+			this.Damage = 0.1f;
 		}
 
 		public override void Update()
@@ -40,7 +40,6 @@ namespace Badminton.Weapons
 
 		public override void Draw(SpriteBatch sb)
 		{
-			// Change origin to center of texture
 			if (world.BodyList.Contains(bullet) && bullet.UserData != null)
 				sb.Draw(MainGame.tex_bullet, bullet.Position * MainGame.METER_TO_PIXEL * MainGame.RESOLUTION_SCALE, null, Color.White, bullet.Rotation, new Vector2(16f, 56f), 0.1f * MainGame.RESOLUTION_SCALE, SpriteEffects.None, 0.0f);
 		}

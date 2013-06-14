@@ -24,12 +24,12 @@ namespace Badminton.Weapons
 		{
 			bullets = new List<Bullet>();
 
-			this.ammoCapacity = 100;
-			this.ammo = 100;
-			this.clipSize = 50;
+			this.ammoCapacity = 1000;
+			this.ammo = 1000;
+			this.clipSize = 100;
 			this.clipAmmo = 0;
 
-			this.refireTime = 10;
+			this.refireTime = 1;
 			this.reloadTime = 120;
 		}
 

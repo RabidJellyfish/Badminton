@@ -596,7 +596,7 @@ namespace Badminton.Stick_Figures
 		/// </summary>
 		public virtual void Update()
 		{
-//			health[leftLowerArm] = 0.5f;
+//			health[leftLowerArm] = 0.5f; // This is for debug
 
 			UpdateArms();
 			UpdateLimbStrength();
@@ -628,7 +628,7 @@ namespace Badminton.Stick_Figures
 			if (!Aiming && !throwing)
 			{
 				// Rest arms at side
-				if (weapon == null || weapon.Type == Weapon.WeaponType.Light || weapon.Type == Weapon.WeaponType.Explosive)
+				if (weapon == null || weapon.Type == Weapon.WeaponType.Light || weapon.Type == Weapon.WeaponType.Explosive || weapon.Type == Weapon.WeaponType.Melee)
 				{
 					leftShoulder.TargetAngle = FindClosestAngle(3 * MathHelper.PiOver4, torso.Rotation, leftShoulder.TargetAngle);
 					rightShoulder.TargetAngle = FindClosestAngle(-3 * MathHelper.PiOver4, torso.Rotation, rightShoulder.TargetAngle);
@@ -652,23 +652,20 @@ namespace Badminton.Stick_Figures
 						rightElbow.TargetAngle = -MathHelper.PiOver2;
 					}
 				}
-				else if (weapon.Type == Weapon.WeaponType.Melee)
-				{
-					// TODO
-				}
 			}
 			else if (Aiming && !throwing)
 			{
+				// Aim weapon in direction
+				float angle = -(float)Math.Atan2(aimVector.Y, aimVector.X);
 				if (weapon == null || weapon.Type == Weapon.WeaponType.Light)
 				{
-					leftShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
-					rightShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, rightShoulder.TargetAngle);
+					leftShoulder.TargetAngle = FindClosestAngle(angle - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
+					rightShoulder.TargetAngle = FindClosestAngle(angle - MathHelper.PiOver2, torso.Rotation, rightShoulder.TargetAngle);
 					leftElbow.TargetAngle = 0f;
 					rightElbow.TargetAngle = 0f;
 				}
-				else if (weapon.Type == Weapon.WeaponType.Medium)
+				else if (weapon.Type == Weapon.WeaponType.Medium || weapon.Type == Weapon.WeaponType.Heavy)
 				{
-					float angle = -(float)Math.Atan2(aimVector.Y, aimVector.X);
 					if (leftHanded)
 					{
 						leftShoulder.TargetAngle = FindClosestAngle(angle - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
@@ -684,30 +681,35 @@ namespace Badminton.Stick_Figures
 						rightElbow.TargetAngle = 0f;
 					}
 				}
-				else if (weapon.Type == Weapon.WeaponType.Heavy)
+				else if (weapon.Type == Weapon.WeaponType.Explosive || weapon.Type == Weapon.WeaponType.Melee)
 				{
-					// TODO
-				}
-				else if (weapon.Type == Weapon.WeaponType.Explosive)
-				{
-					// TODO
-				}
-				else if (weapon.Type == Weapon.WeaponType.Melee)
-				{
-					// TODO
+					if (leftHanded)
+					{
+						leftShoulder.TargetAngle = FindClosestAngle(angle + (angle >= MathHelper.PiOver2 || angle <= -MathHelper.PiOver2 ? MathHelper.Pi : 0), torso.Rotation, leftShoulder.TargetAngle);
+						rightShoulder.TargetAngle = FindClosestAngle(angle - MathHelper.PiOver2, torso.Rotation, rightShoulder.TargetAngle);
+						leftElbow.TargetAngle = 0f;
+						rightElbow.TargetAngle = 0f;
+					}
+					else
+					{
+						leftShoulder.TargetAngle = FindClosestAngle(angle - MathHelper.PiOver2, torso.Rotation, rightShoulder.TargetAngle);
+						rightShoulder.TargetAngle = FindClosestAngle(angle + (angle >= MathHelper.PiOver2 || angle <= -MathHelper.PiOver2 ? MathHelper.Pi : 0), torso.Rotation, leftShoulder.TargetAngle);
+						leftElbow.TargetAngle = 0f;
+						rightElbow.TargetAngle = 0f;
+					}
 				}
 
 				Aiming = false;
 			}
 			else
 			{
+				// Throw weapon
 				leftShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
 				rightShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, rightShoulder.TargetAngle);
 				leftElbow.TargetAngle = 0f;
 				rightElbow.TargetAngle = 0f;
 
-				AngleJoint[] joints = new AngleJoint[] { leftShoulder, leftElbow, rightShoulder, rightElbow };
-				if (JointsAreInPosition(joints))
+				if (weapon != null)
 				{
 					if (world.JointList.Contains(weaponJoint))
 						world.RemoveJoint(weaponJoint);
@@ -716,9 +718,11 @@ namespace Badminton.Stick_Figures
 					weapon.BeingHeld = false;
 					weapon.Body.LinearVelocity = aimVector / aimVector.Length() * 10f + this.torso.LinearVelocity;
 					this.weapon = null;
-
-					throwing = false;
 				}
+
+				AngleJoint[] joints = new AngleJoint[] { leftShoulder, leftElbow, rightShoulder, rightElbow };
+				if (JointsAreInPosition(joints))
+					throwing = false;
 			}
 		}
 
