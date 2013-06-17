@@ -73,6 +73,7 @@ namespace Badminton.Stick_Figures
 		public bool Crouching { get; set; }
 		private int walkStage;
 		private bool throwing;
+		private bool switchingHands;
 
 		// Other
 		private Color color;
@@ -84,6 +85,15 @@ namespace Badminton.Stick_Figures
 		protected List<Weapon> touchingWeapons;
 		private bool leftHanded;
 		
+		#region Creation
+
+		/// <summary>
+		/// Stick figure constructor
+		/// </summary>
+		/// <param name="world">The world to place the physics objects in</param>
+		/// <param name="position">The position to place the center of the stick figure's torso</param>
+		/// <param name="collisionCat">The collision category of the figure. Different players will have different collision categories.</param>
+		/// <param name="c">The color of the stick figure</param>
 		public StickFigure(World world, Vector2 position, Category collisionCat, Color c)
 		{
 			this.world = world;
@@ -94,10 +104,11 @@ namespace Badminton.Stick_Figures
 			this.color = c;
 			walkStage = 0;
 			throwing = false;
+			switchingHands = false;
+			leftHanded = true;
 			groundCheck = 0;
 			touchingWeapons = new List<Weapon>();
 			this.collisionCat = collisionCat;
-			leftHanded = true;
 
 			GenerateBody(world, position, collisionCat);
 			ConnectBody(world);
@@ -121,8 +132,6 @@ namespace Badminton.Stick_Figures
 
 			Stand();
 		}
-
-		#region Creation
 
 		/// <summary>
 		/// Generates the stick figure's limbs, torso, and head
@@ -460,7 +469,7 @@ namespace Badminton.Stick_Figures
 			{
 				leftLowerLeg.Friction = 100.0f;
 				rightLowerLeg.Friction = 100.0f;
-				torso.ApplyLinearImpulse(Vector2.UnitY * (Crouching ? -25 : -10) * health[torso] * GetTotalLegStrength() * health[head]); // Change joint dependancy
+				torso.ApplyLinearImpulse(Vector2.UnitY * (Crouching ? -25 : -15) * health[torso] * GetTotalLegStrength() * health[head]); // Change joint dependancy
 			}
 			Crouching = false;
 		}
@@ -553,11 +562,21 @@ namespace Badminton.Stick_Figures
 		}
 
 		/// <summary>
+		/// UNFINISHED
 		/// Swings the weapon
 		/// </summary>
 		public void Melee()
 		{
-		} // TODO
+		}
+
+		/// <summary>
+		/// Switches the hand you are holding the weapon in
+		/// </summary>
+		public void SwitchHands()
+		{
+			if (!switchingHands && weapon != null)
+				switchingHands = true;
+		}
 
 		/// <summary>
 		/// Throws the weapon
@@ -568,6 +587,7 @@ namespace Badminton.Stick_Figures
 			if (!throwing && weapon != null)
 			{
 				throwing = true;
+				switchingHands = false;
 				this.aimVector = position - (torso.Position * MainGame.RESOLUTION_SCALE - 15f * Vector2.UnitY * MainGame.PIXEL_TO_METER * MainGame.RESOLUTION_SCALE);
 			}
 		}
@@ -625,7 +645,7 @@ namespace Badminton.Stick_Figures
 			rightElbow.MaxImpulse = maxImpulse * health[rightLowerArm] * health[rightUpperArm];
 			rightShoulder.MaxImpulse = maxImpulse * health[torso] * health[rightUpperArm];
 
-			if (!Aiming && !throwing)
+			if (!Aiming && !throwing && !switchingHands)
 			{
 				// Rest arms at side
 				if (weapon == null || weapon.Type == Weapon.WeaponType.Light || weapon.Type == Weapon.WeaponType.Explosive || weapon.Type == Weapon.WeaponType.Melee)
@@ -701,7 +721,7 @@ namespace Badminton.Stick_Figures
 
 				Aiming = false;
 			}
-			else
+			else if (throwing)
 			{
 				// Throw weapon
 				leftShoulder.TargetAngle = FindClosestAngle(-(float)Math.Atan2(aimVector.Y, aimVector.X) - MathHelper.PiOver2, torso.Rotation, leftShoulder.TargetAngle);
@@ -723,6 +743,72 @@ namespace Badminton.Stick_Figures
 				AngleJoint[] joints = new AngleJoint[] { leftShoulder, leftElbow, rightShoulder, rightElbow };
 				if (JointsAreInPosition(joints))
 					throwing = false;
+			}
+			else if (switchingHands)
+			{
+				if (weapon != null)
+				{
+					if (leftHanded)
+					{
+						// If you don't have a right hand to switch to, cancel the action
+						if (health[rightLowerArm] <= 0)
+							switchingHands = false;
+						else
+						{
+							// Move left hand to right position
+							leftShoulder.TargetAngle = FindClosestAngle(0f, rightShoulder.TargetAngle, 0f);
+							leftElbow.TargetAngle = rightElbow.TargetAngle;
+							AngleJoint[] joints = new AngleJoint[] { leftShoulder, leftElbow };
+							if (JointsAreInPosition(joints) || (LeftHandPosition - RightHandPosition).Length() < 0.1f)
+							{
+								if (world.JointList.Contains(weaponJoint))
+									world.RemoveJoint(weaponJoint);
+								if (world.JointList.Contains(r_weaponJoint))
+									world.RemoveJoint(r_weaponJoint);
+								leftHanded = false;
+								this.weapon.Position = RightHandPosition;
+								r_weaponJoint = JointFactory.CreateRevoluteJoint(world, rightLowerArm, this.weapon.Body, Vector2.Zero);
+								weaponJoint = JointFactory.CreateAngleJoint(world, rightLowerArm, this.weapon.Body);
+								float angle = weapon.Body.Rotation - rightLowerArm.Rotation;
+								weaponJoint.TargetAngle = (int)(angle / MathHelper.TwoPi) * MathHelper.TwoPi;
+								weaponJoint.CollideConnected = false;
+								weaponJoint.MaxImpulse = 100f;
+								switchingHands = false;
+							}
+						}
+					}
+					else
+					{
+						// If you don't have a left hand to switch to, cancel the action
+						if (health[leftLowerArm] <= 0)
+							switchingHands = false;
+						else
+						{
+							// Move right hand to left hand position
+							rightShoulder.TargetAngle = FindClosestAngle(0f, leftShoulder.TargetAngle, 0f);
+							rightElbow.TargetAngle = leftElbow.TargetAngle;
+							AngleJoint[] joints = new AngleJoint[] { rightShoulder, rightElbow };
+							if (JointsAreInPosition(joints) || (LeftHandPosition - RightHandPosition).Length() < 0.1f)
+							{
+								if (world.JointList.Contains(weaponJoint))
+									world.RemoveJoint(weaponJoint);
+								if (world.JointList.Contains(r_weaponJoint))
+									world.RemoveJoint(r_weaponJoint);
+								leftHanded = true;
+								this.weapon.Position = LeftHandPosition;
+								r_weaponJoint = JointFactory.CreateRevoluteJoint(world, leftLowerArm, this.weapon.Body, Vector2.Zero);
+								weaponJoint = JointFactory.CreateAngleJoint(world, leftLowerArm, this.weapon.Body);
+								float angle = weapon.Body.Rotation - leftLowerArm.Rotation;
+								weaponJoint.TargetAngle = (int)(angle / MathHelper.TwoPi) * MathHelper.TwoPi;
+								weaponJoint.CollideConnected = false;
+								weaponJoint.MaxImpulse = 100f;
+								switchingHands = false;
+							}
+						}
+					}
+				}
+				else
+					switchingHands = false;
 			}
 		}
 

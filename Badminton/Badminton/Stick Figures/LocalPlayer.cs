@@ -18,9 +18,12 @@ namespace Badminton.Stick_Figures
 {
 	class LocalPlayer : StickFigure
 	{
+		private bool pressingE;
+
 		public LocalPlayer(World world, Vector2 position, Category collisionCat, Color color)
 			: base(world, position, collisionCat, color)
 		{
+			pressingE = true;
 		}
 
 		public override void Update()
@@ -38,7 +41,15 @@ namespace Badminton.Stick_Figures
 				ReloadWeapon();
 
 			if (Keyboard.GetState().IsKeyDown(Keys.E))
-				Melee(); // Change to switch hands eventually
+			{
+				if (!pressingE)
+				{
+					SwitchHands();
+					pressingE = true;
+				}
+			}
+			else
+				pressingE = false;
 
 			if (Keyboard.GetState().IsKeyDown(Keys.Q))
 				ThrowWeapon(new Vector2(Mouse.GetState().X, Mouse.GetState().Y) * MainGame.PIXEL_TO_METER);

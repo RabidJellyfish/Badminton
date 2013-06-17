@@ -20,7 +20,7 @@ namespace Badminton.Weapons
 		private List<Bullet> bullets;
 
 		public TestWeapon(World world, Vector2 position)
-			: base (world, position, WeaponType.Medium, 16 * MainGame.PIXEL_TO_METER, 48 * MainGame.PIXEL_TO_METER, 0.1f)
+			: base (world, position, WeaponType.Light, 16 * MainGame.PIXEL_TO_METER, 48 * MainGame.PIXEL_TO_METER, 0.1f)
 		{
 			bullets = new List<Bullet>();
 
